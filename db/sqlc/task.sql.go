@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -27,13 +28,13 @@ RETURNING id, title, description, created_at, due_to, status, priority, project_
 `
 
 type CreateTaskParams struct {
-	Title       string             `json:"title"`
-	Description string             `json:"description"`
-	DueTo       pgtype.Timestamptz `json:"due_to"`
-	Status      string             `json:"status"`
-	Priority    string             `json:"priority"`
-	ProjectID   pgtype.Int4        `json:"project_id"`
-	AssignedTo  pgtype.Int4        `json:"assigned_to"`
+	Title       string      `json:"title"`
+	Description string      `json:"description"`
+	DueTo       time.Time   `json:"due_to"`
+	Status      string      `json:"status"`
+	Priority    string      `json:"priority"`
+	ProjectID   pgtype.Int4 `json:"project_id"`
+	AssignedTo  pgtype.Int4 `json:"assigned_to"`
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
