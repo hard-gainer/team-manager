@@ -8,10 +8,10 @@ dropdb:
 	docker exec -it postgres17 dropdb --username=root task_tracker 
 
 migrateup:
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/task_tracker?sslmode=disable" -verbose up
+	migrate -path internal/db/migration -database "postgresql://root:secret@localhost:5432/task_tracker?sslmode=disable" -verbose up
 
 migratedown:
-	migrate -path db/migration -database "postgresql://root:secret@localhost:5432/task_tracker?sslmode=disable" -verbose down 
+	migrate -path internal/db/migration -database "postgresql://root:secret@localhost:5432/task_tracker?sslmode=disable" -verbose down 
 
 sqlc: 
 	sqlc generate
