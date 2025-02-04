@@ -1,7 +1,9 @@
 package service
 
 import (
+	"database/sql"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -43,6 +45,27 @@ func (server *Server) createTask(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, task)
+}
+
+func (server *Server) getTask(ctx *gin.Context) {
+	idParam := ctx.Param("id")
+	id, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	task, err := server.store.GetTask(ctx, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, task)
 }
 
 func toNullInt4(i int32) pgtype.Int4 {
