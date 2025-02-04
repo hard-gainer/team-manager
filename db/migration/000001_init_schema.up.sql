@@ -10,20 +10,20 @@ CREATE TABLE "employees" (
 CREATE TABLE "projects" (
     id BIGSERIAL PRIMARY KEY,
     title VARCHAR(100) NOT NULL,
-    description TEXT,
-    start_date TIMESTAMPTZ,
-    end_date TIMESTAMPTZ,
+    description TEXT NOT NULL,
+    start_date TIMESTAMPTZ NOT NULL,
+    end_date TIMESTAMPTZ NOT NULL,
     created_by INT REFERENCES employees(id) ON DELETE SET NULL
 );
 
 CREATE TABLE "tasks" (
     id BIGSERIAL PRIMARY KEY,
     title VARCHAR(100) NOT NULL,
-    description TEXT,
+    description TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now()),
     due_to TIMESTAMPTZ NOT NULL,
-    status VARCHAR(50) NOT NULL CHECK (status IN ('ASSIGNED', 'STARTED', 'SUSPENDED', 'COMPLETED')),
-    priority VARCHAR(50) CHECK (priority IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')),
+    status VARCHAR(50) NOT NULL CHECK (status IN ('ASSIGNED', 'STARTED', 'SUSPENDED', 'COMPLETED')) NOT NULL,
+    priority VARCHAR(50) CHECK (priority IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')) NOT NULL,
     project_id INT REFERENCES projects(id) ON DELETE CASCADE,
     assigned_to INT REFERENCES employees(id) ON DELETE SET NULL
 );
@@ -32,9 +32,9 @@ CREATE TABLE "histories" (
     id BIGSERIAL PRIMARY KEY,
     task_id INT REFERENCES tasks(id) ON DELETE CASCADE,
     changed_by INT REFERENCES employees(id) ON DELETE SET NULL,
-    change_at TIMESTAMPTZ DEFAULT (now()),
-    old_status VARCHAR(50),
-    new_status VARCHAR(50)
+    change_at TIMESTAMPTZ DEFAULT (now()) NOT NULL,
+    old_status VARCHAR(50) NOT NULL,
+    new_status VARCHAR(50) NOT NULL
 );
 
 

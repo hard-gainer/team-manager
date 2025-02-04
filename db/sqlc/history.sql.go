@@ -22,10 +22,10 @@ RETURNING id, task_id, changed_by, change_at, old_status, new_status
 `
 
 type CreateHistoryParams struct {
-	TaskID    sql.NullInt32  `json:"task_id"`
-	ChangedBy sql.NullInt32  `json:"changed_by"`
-	OldStatus sql.NullString `json:"old_status"`
-	NewStatus sql.NullString `json:"new_status"`
+	TaskID    sql.NullInt32 `json:"task_id"`
+	ChangedBy sql.NullInt32 `json:"changed_by"`
+	OldStatus string        `json:"old_status"`
+	NewStatus string        `json:"new_status"`
 }
 
 func (q *Queries) CreateHistory(ctx context.Context, arg CreateHistoryParams) (History, error) {

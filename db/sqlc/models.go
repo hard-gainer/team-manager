@@ -17,31 +17,31 @@ type Employee struct {
 }
 
 type History struct {
-	ID        int64          `json:"id"`
-	TaskID    sql.NullInt32  `json:"task_id"`
-	ChangedBy sql.NullInt32  `json:"changed_by"`
-	ChangeAt  sql.NullTime   `json:"change_at"`
-	OldStatus sql.NullString `json:"old_status"`
-	NewStatus sql.NullString `json:"new_status"`
+	ID        int64         `json:"id"`
+	TaskID    sql.NullInt32 `json:"task_id"`
+	ChangedBy sql.NullInt32 `json:"changed_by"`
+	ChangeAt  time.Time     `json:"change_at"`
+	OldStatus string        `json:"old_status"`
+	NewStatus string        `json:"new_status"`
 }
 
 type Project struct {
-	ID          int64          `json:"id"`
-	Title       string         `json:"title"`
-	Description sql.NullString `json:"description"`
-	StartDate   sql.NullTime   `json:"start_date"`
-	EndDate     sql.NullTime   `json:"end_date"`
-	CreatedBy   sql.NullInt32  `json:"created_by"`
+	ID          int64         `json:"id"`
+	Title       string        `json:"title"`
+	Description string        `json:"description"`
+	StartDate   time.Time     `json:"start_date"`
+	EndDate     time.Time     `json:"end_date"`
+	CreatedBy   sql.NullInt32 `json:"created_by"`
 }
 
 type Task struct {
-	ID          int64          `json:"id"`
-	Title       string         `json:"title"`
-	Description sql.NullString `json:"description"`
-	CreatedAt   time.Time      `json:"created_at"`
-	DueTo       time.Time      `json:"due_to"`
-	Status      string         `json:"status"`
-	Priority    sql.NullString `json:"priority"`
-	ProjectID   sql.NullInt32  `json:"project_id"`
-	AssignedTo  sql.NullInt32  `json:"assigned_to"`
+	ID          int64         `json:"id"`
+	Title       string        `json:"title"`
+	Description string        `json:"description"`
+	CreatedAt   time.Time     `json:"created_at"`
+	DueTo       time.Time     `json:"due_to"`
+	Status      string        `json:"status"`
+	Priority    string        `json:"priority"`
+	ProjectID   sql.NullInt32 `json:"project_id"`
+	AssignedTo  sql.NullInt32 `json:"assigned_to"`
 }

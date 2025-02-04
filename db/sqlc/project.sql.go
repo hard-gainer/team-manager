@@ -6,6 +6,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 const createProject = `-- name: CreateProject :one
@@ -22,11 +23,11 @@ RETURNING id, title, description, start_date, end_date, created_by
 `
 
 type CreateProjectParams struct {
-	Title       string         `json:"title"`
-	Description sql.NullString `json:"description"`
-	StartDate   sql.NullTime   `json:"start_date"`
-	EndDate     sql.NullTime   `json:"end_date"`
-	CreatedBy   sql.NullInt32  `json:"created_by"`
+	Title       string        `json:"title"`
+	Description string        `json:"description"`
+	StartDate   time.Time     `json:"start_date"`
+	EndDate     time.Time     `json:"end_date"`
+	CreatedBy   sql.NullInt32 `json:"created_by"`
 }
 
 func (q *Queries) CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error) {
@@ -121,9 +122,9 @@ RETURNING id, title, description, start_date, end_date, created_by
 `
 
 type UpdateProjectParams struct {
-	ID      int64        `json:"id"`
-	Title   string       `json:"title"`
-	EndDate sql.NullTime `json:"end_date"`
+	ID      int64     `json:"id"`
+	Title   string    `json:"title"`
+	EndDate time.Time `json:"end_date"`
 }
 
 func (q *Queries) UpdateProject(ctx context.Context, arg UpdateProjectParams) (Project, error) {

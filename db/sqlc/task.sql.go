@@ -25,13 +25,13 @@ RETURNING id, title, description, created_at, due_to, status, priority, project_
 `
 
 type CreateTaskParams struct {
-	Title       string         `json:"title"`
-	Description sql.NullString `json:"description"`
-	DueTo       time.Time      `json:"due_to"`
-	Status      string         `json:"status"`
-	Priority    sql.NullString `json:"priority"`
-	ProjectID   sql.NullInt32  `json:"project_id"`
-	AssignedTo  sql.NullInt32  `json:"assigned_to"`
+	Title       string        `json:"title"`
+	Description string        `json:"description"`
+	DueTo       time.Time     `json:"due_to"`
+	Status      string        `json:"status"`
+	Priority    string        `json:"priority"`
+	ProjectID   sql.NullInt32 `json:"project_id"`
+	AssignedTo  sql.NullInt32 `json:"assigned_to"`
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
