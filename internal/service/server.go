@@ -21,6 +21,7 @@ func NewServer(store db.Store) *Server {
 	router.POST("/tasks", server.createTask)
     router.PATCH("/tasks/:id/title", server.updateTaskTitle)
    	router.PATCH("/tasks/:id/description", server.updateTaskDescription)
+    router.PATCH("/tasks/:id/deadline", server.updateTaskDeadline)
 
 	server.router = router
 	return server
