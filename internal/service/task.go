@@ -78,6 +78,24 @@ func (server *Server) listTasks(ctx *gin.Context) {
     ctx.JSON(http.StatusOK, tasks)
 }
 
+func (server *Server) listProjectTasks(ctx *gin.Context) {
+    idParam := ctx.Param("id")
+    id, err := strconv.ParseInt(idParam, 10, 32)
+    if err != nil {
+        ctx.JSON(http.StatusBadRequest, errorResponse(err))
+        return
+    }
+
+    projectID := toNullInt4(int32(id))
+    tasks, err := server.store.ListProjectTasks(ctx, projectID)
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+        return
+    }
+
+    ctx.JSON(http.StatusOK, tasks)
+}
+
 func toNullInt4(i int32) pgtype.Int4 {
 	return pgtype.Int4{
 		Int32: int32(i),
