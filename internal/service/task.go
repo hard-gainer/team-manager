@@ -68,6 +68,16 @@ func (server *Server) getTask(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, task)
 }
 
+func (server *Server) listTasks(ctx *gin.Context) {
+    tasks, err := server.store.ListTasks(ctx)
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+        return
+    }
+
+    ctx.JSON(http.StatusOK, tasks)
+}
+
 func toNullInt4(i int32) pgtype.Int4 {
 	return pgtype.Int4{
 		Int32: int32(i),
