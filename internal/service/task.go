@@ -146,6 +146,38 @@ func (server *Server) updateTaskTitle(ctx *gin.Context) {
     ctx.JSON(http.StatusOK, task)
 }
 
+type updateTaskDescriptionRequest struct {
+    Description string `json:"description" binding:"required"`
+}
+
+func (server *Server) updateTaskDescription(ctx *gin.Context) {
+    idParam := ctx.Param("id")
+    id, err := strconv.ParseInt(idParam, 10, 64)
+    if err != nil {
+        ctx.JSON(http.StatusBadRequest, errorResponse(err))
+        return
+    }
+
+    var req updateTaskDescriptionRequest
+    if err := ctx.ShouldBindJSON(&req); err != nil {
+        ctx.JSON(http.StatusBadRequest, errorResponse(err))
+        return
+    }
+
+    arg := db.UpdateTaskDescriptionParams{
+        ID:          id,
+        Description: req.Description,
+    }
+
+    task, err := server.store.UpdateTaskDescription(ctx, arg)
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+        return
+    }
+
+    ctx.JSON(http.StatusOK, task)
+}
+
 func toNullInt4(i int32) pgtype.Int4 {
 	return pgtype.Int4{
 		Int32: int32(i),
