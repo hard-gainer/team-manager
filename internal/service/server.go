@@ -14,6 +14,13 @@ func NewServer(store db.Store) *Server {
 	server := &Server{store: store}
 	router := gin.Default()
 
+	registerTaskRoutes(server, router)
+
+	server.router = router
+	return server
+}
+
+func registerTaskRoutes(server *Server, router *gin.Engine) {
 	router.GET("/tasks/:id", server.getTask)
     router.GET("/tasks", server.listTasks)
     router.GET("/projects/:id/tasks", server.listProjectTasks)
@@ -24,9 +31,6 @@ func NewServer(store db.Store) *Server {
     router.PATCH("/tasks/:id/deadline", server.updateTaskDeadline)
     router.PATCH("/tasks/:id/status", server.updateTaskStatus)
     router.PATCH("/tasks/:id/priority", server.updateTaskPriority)
-
-	server.router = router
-	return server
 }
 
 func (server *Server) Start(address string) error {
