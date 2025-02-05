@@ -210,6 +210,38 @@ func (server *Server) updateTaskDeadline(ctx *gin.Context) {
     ctx.JSON(http.StatusOK, task)
 }
 
+type updateTaskStatusRequest struct {
+    Status string `json:"status" binding:"required,oneof=ASSIGNED STARTED SUSPENDED COMPLETED"`
+}
+
+func (server *Server) updateTaskStatus(ctx *gin.Context) {
+    idParam := ctx.Param("id")
+    id, err := strconv.ParseInt(idParam, 10, 64)
+    if err != nil {
+        ctx.JSON(http.StatusBadRequest, errorResponse(err))
+        return
+    }
+
+    var req updateTaskStatusRequest
+    if err := ctx.ShouldBindJSON(&req); err != nil {
+        ctx.JSON(http.StatusBadRequest, errorResponse(err))
+        return
+    }
+
+    arg := db.UpdateTaskStatusParams{
+        ID:     id,
+        Status: req.Status,
+    }
+
+    task, err := server.store.UpdateTaskStatus(ctx, arg)
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+        return
+    }
+
+    ctx.JSON(http.StatusOK, task)
+}
+
 func toNullInt4(i int32) pgtype.Int4 {
 	return pgtype.Int4{
 		Int32: int32(i),
