@@ -27,9 +27,33 @@ WHERE project_id = $1;
 SELECT * FROM tasks
 WHERE assigned_to = $1;
 
--- name: UpdateTask :one
+-- name: UpdateTaskTitle :one
+UPDATE tasks
+SET title = $2
+WHERE id = $1
+RETURNING *;
+
+-- name: UpdateTaskDescription :one
+UPDATE tasks
+SET description = $2
+WHERE id = $1
+RETURNING *;
+
+-- name: UpdateTaskDeadline :one
+UPDATE tasks
+SET due_to = $2
+WHERE id = $1
+RETURNING *;
+
+-- name: UpdateTaskStatus :one
 UPDATE tasks
 SET status = $2
+WHERE id = $1
+RETURNING *;
+
+-- name: UpdateTaskPriority :one
+UPDATE tasks
+SET priority = $2
 WHERE id = $1
 RETURNING *;
 

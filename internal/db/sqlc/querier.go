@@ -30,7 +30,11 @@ type Querier interface {
 	ListTasks(ctx context.Context) ([]Task, error)
 	UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (Employee, error)
 	UpdateProject(ctx context.Context, arg UpdateProjectParams) (Project, error)
-	UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, error)
+	UpdateTaskDeadline(ctx context.Context, arg UpdateTaskDeadlineParams) (Task, error)
+	UpdateTaskDescription(ctx context.Context, arg UpdateTaskDescriptionParams) (Task, error)
+	UpdateTaskPriority(ctx context.Context, arg UpdateTaskPriorityParams) (Task, error)
+	UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusParams) (Task, error)
+	UpdateTaskTitle(ctx context.Context, arg UpdateTaskTitleParams) (Task, error)
 }
 
 var _ Querier = (*Queries)(nil)

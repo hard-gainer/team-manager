@@ -198,20 +198,136 @@ func (q *Queries) ListTasks(ctx context.Context) ([]Task, error) {
 	return items, nil
 }
 
-const updateTask = `-- name: UpdateTask :one
+const updateTaskDeadline = `-- name: UpdateTaskDeadline :one
+UPDATE tasks
+SET due_to = $2
+WHERE id = $1
+RETURNING id, title, description, created_at, due_to, status, priority, project_id, assigned_to
+`
+
+type UpdateTaskDeadlineParams struct {
+	ID    int64     `json:"id"`
+	DueTo time.Time `json:"due_to"`
+}
+
+func (q *Queries) UpdateTaskDeadline(ctx context.Context, arg UpdateTaskDeadlineParams) (Task, error) {
+	row := q.db.QueryRow(ctx, updateTaskDeadline, arg.ID, arg.DueTo)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.CreatedAt,
+		&i.DueTo,
+		&i.Status,
+		&i.Priority,
+		&i.ProjectID,
+		&i.AssignedTo,
+	)
+	return i, err
+}
+
+const updateTaskDescription = `-- name: UpdateTaskDescription :one
+UPDATE tasks
+SET description = $2
+WHERE id = $1
+RETURNING id, title, description, created_at, due_to, status, priority, project_id, assigned_to
+`
+
+type UpdateTaskDescriptionParams struct {
+	ID          int64  `json:"id"`
+	Description string `json:"description"`
+}
+
+func (q *Queries) UpdateTaskDescription(ctx context.Context, arg UpdateTaskDescriptionParams) (Task, error) {
+	row := q.db.QueryRow(ctx, updateTaskDescription, arg.ID, arg.Description)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.CreatedAt,
+		&i.DueTo,
+		&i.Status,
+		&i.Priority,
+		&i.ProjectID,
+		&i.AssignedTo,
+	)
+	return i, err
+}
+
+const updateTaskPriority = `-- name: UpdateTaskPriority :one
+UPDATE tasks
+SET priority = $2
+WHERE id = $1
+RETURNING id, title, description, created_at, due_to, status, priority, project_id, assigned_to
+`
+
+type UpdateTaskPriorityParams struct {
+	ID       int64  `json:"id"`
+	Priority string `json:"priority"`
+}
+
+func (q *Queries) UpdateTaskPriority(ctx context.Context, arg UpdateTaskPriorityParams) (Task, error) {
+	row := q.db.QueryRow(ctx, updateTaskPriority, arg.ID, arg.Priority)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.CreatedAt,
+		&i.DueTo,
+		&i.Status,
+		&i.Priority,
+		&i.ProjectID,
+		&i.AssignedTo,
+	)
+	return i, err
+}
+
+const updateTaskStatus = `-- name: UpdateTaskStatus :one
 UPDATE tasks
 SET status = $2
 WHERE id = $1
 RETURNING id, title, description, created_at, due_to, status, priority, project_id, assigned_to
 `
 
-type UpdateTaskParams struct {
+type UpdateTaskStatusParams struct {
 	ID     int64  `json:"id"`
 	Status string `json:"status"`
 }
 
-func (q *Queries) UpdateTask(ctx context.Context, arg UpdateTaskParams) (Task, error) {
-	row := q.db.QueryRow(ctx, updateTask, arg.ID, arg.Status)
+func (q *Queries) UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusParams) (Task, error) {
+	row := q.db.QueryRow(ctx, updateTaskStatus, arg.ID, arg.Status)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.CreatedAt,
+		&i.DueTo,
+		&i.Status,
+		&i.Priority,
+		&i.ProjectID,
+		&i.AssignedTo,
+	)
+	return i, err
+}
+
+const updateTaskTitle = `-- name: UpdateTaskTitle :one
+UPDATE tasks
+SET title = $2
+WHERE id = $1
+RETURNING id, title, description, created_at, due_to, status, priority, project_id, assigned_to
+`
+
+type UpdateTaskTitleParams struct {
+	ID    int64  `json:"id"`
+	Title string `json:"title"`
+}
+
+func (q *Queries) UpdateTaskTitle(ctx context.Context, arg UpdateTaskTitleParams) (Task, error) {
+	row := q.db.QueryRow(ctx, updateTaskTitle, arg.ID, arg.Title)
 	var i Task
 	err := row.Scan(
 		&i.ID,
