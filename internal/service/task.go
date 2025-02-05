@@ -242,6 +242,38 @@ func (server *Server) updateTaskStatus(ctx *gin.Context) {
     ctx.JSON(http.StatusOK, task)
 }
 
+type updateTaskPriorityRequest struct {
+    Priority string `json:"priority" binding:"required,oneof=LOW MEDIUM HIGH CRITICAL"`
+}
+
+func (server *Server) updateTaskPriority(ctx *gin.Context) {
+    idParam := ctx.Param("id")
+    id, err := strconv.ParseInt(idParam, 10, 64)
+    if err != nil {
+        ctx.JSON(http.StatusBadRequest, errorResponse(err))
+        return
+    }
+
+    var req updateTaskPriorityRequest
+    if err := ctx.ShouldBindJSON(&req); err != nil {
+        ctx.JSON(http.StatusBadRequest, errorResponse(err))
+        return
+    }
+
+    arg := db.UpdateTaskPriorityParams{
+        ID:       id,
+        Priority: req.Priority,
+    }
+
+    task, err := server.store.UpdateTaskPriority(ctx, arg)
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+        return
+    }
+
+    ctx.JSON(http.StatusOK, task)
+}
+
 func toNullInt4(i int32) pgtype.Int4 {
 	return pgtype.Int4{
 		Int32: int32(i),

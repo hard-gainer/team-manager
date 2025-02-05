@@ -23,6 +23,7 @@ func NewServer(store db.Store) *Server {
    	router.PATCH("/tasks/:id/description", server.updateTaskDescription)
     router.PATCH("/tasks/:id/deadline", server.updateTaskDeadline)
     router.PATCH("/tasks/:id/status", server.updateTaskStatus)
+    router.PATCH("/tasks/:id/priority", server.updateTaskPriority)
 
 	server.router = router
 	return server
