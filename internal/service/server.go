@@ -15,7 +15,7 @@ func NewServer(store db.Store) *Server {
 	router := gin.Default()
 
 	router.LoadHTMLGlob("templates/*")
-    router.Static("/static", "./static")
+    // router.Static("/static", "./static")
 
 	registerTaskRoutes(server, router)
 	router.GET("/dashboard", server.showDashboard)
