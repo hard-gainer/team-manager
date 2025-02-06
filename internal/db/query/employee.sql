@@ -10,10 +10,21 @@ INSERT INTO employees (
 )
 RETURNING *;
 
--- name: UpdateEmployee :one
+-- name: UpdateEmployeeFirstName :one
 UPDATE employees
-    SET first_name = $2,
-    last_name = $3 
+SET first_name = $2
+WHERE id = $1
+RETURNING *;
+
+-- name: UpdateEmployeeLastName :one
+UPDATE employees
+SET last_name = $2 
+WHERE id = $1
+RETURNING *;
+
+-- name: UpdateEmployeePassword :one
+UPDATE employees
+SET password_hash = $2 
 WHERE id = $1
 RETURNING *;
 

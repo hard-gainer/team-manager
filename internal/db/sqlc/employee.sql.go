@@ -110,22 +110,72 @@ func (q *Queries) ListEmployees(ctx context.Context) ([]Employee, error) {
 	return items, nil
 }
 
-const updateEmployee = `-- name: UpdateEmployee :one
+const updateEmployeeFirstName = `-- name: UpdateEmployeeFirstName :one
 UPDATE employees
-    SET first_name = $2,
-    last_name = $3 
+SET first_name = $2
 WHERE id = $1
 RETURNING id, first_name, last_name, email, password_hash, role
 `
 
-type UpdateEmployeeParams struct {
+type UpdateEmployeeFirstNameParams struct {
 	ID        int64  `json:"id"`
 	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
 }
 
-func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (Employee, error) {
-	row := q.db.QueryRow(ctx, updateEmployee, arg.ID, arg.FirstName, arg.LastName)
+func (q *Queries) UpdateEmployeeFirstName(ctx context.Context, arg UpdateEmployeeFirstNameParams) (Employee, error) {
+	row := q.db.QueryRow(ctx, updateEmployeeFirstName, arg.ID, arg.FirstName)
+	var i Employee
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Role,
+	)
+	return i, err
+}
+
+const updateEmployeeLastName = `-- name: UpdateEmployeeLastName :one
+UPDATE employees
+SET last_name = $2 
+WHERE id = $1
+RETURNING id, first_name, last_name, email, password_hash, role
+`
+
+type UpdateEmployeeLastNameParams struct {
+	ID       int64  `json:"id"`
+	LastName string `json:"last_name"`
+}
+
+func (q *Queries) UpdateEmployeeLastName(ctx context.Context, arg UpdateEmployeeLastNameParams) (Employee, error) {
+	row := q.db.QueryRow(ctx, updateEmployeeLastName, arg.ID, arg.LastName)
+	var i Employee
+	err := row.Scan(
+		&i.ID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Role,
+	)
+	return i, err
+}
+
+const updateEmployeePassword = `-- name: UpdateEmployeePassword :one
+UPDATE employees
+SET password_hash = $2 
+WHERE id = $1
+RETURNING id, first_name, last_name, email, password_hash, role
+`
+
+type UpdateEmployeePasswordParams struct {
+	ID           int64  `json:"id"`
+	PasswordHash string `json:"password_hash"`
+}
+
+func (q *Queries) UpdateEmployeePassword(ctx context.Context, arg UpdateEmployeePasswordParams) (Employee, error) {
+	row := q.db.QueryRow(ctx, updateEmployeePassword, arg.ID, arg.PasswordHash)
 	var i Employee
 	err := row.Scan(
 		&i.ID,
