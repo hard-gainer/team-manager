@@ -9,11 +9,24 @@
             {{ .Status }}
         </span>
     </p>
-    <button 
-        class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
-        hx-patch="/tasks/{{ .ID }}/status?status=COMPLETED" 
-        hx-target="#task-{{ .ID }}" 
-        hx-swap="outerHTML">
-        Mark as Complete
-    </button>
+    <div class="flex flex-col space-y-4">
+        <select 
+            class="w-full p-2 border border-gray-300 rounded-lg"
+            id="status-select-{{ .ID }}"
+            name="status">
+            <option value="ASSIGNED" {{if eq .Status "ASSIGNED"}}selected{{end}}>Assigned</option>
+            <option value="STARTED" {{if eq .Status "STARTED"}}selected{{end}}>Started</option>
+            <option value="SUSPENDED" {{if eq .Status "SUSPENDED"}}selected{{end}}>Suspended</option>
+            <option value="COMPLETED" {{if eq .Status "COMPLETED"}}selected{{end}}>Completed</option>
+        </select>
+        <button 
+            class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+            hx-patch="/tasks/{{ .ID }}/status"
+            hx-target="#task-{{ .ID }}"
+            hx-swap="outerHTML"
+            hx-include="#status-select-{{ .ID }}">
+            Update Status
+        </button>
+    </div>
 </div>
+

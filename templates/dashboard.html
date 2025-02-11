@@ -11,7 +11,7 @@
     <h1 class="text-3xl font-bold mb-8 text-gray-800">Task Dashboard</h1>
     <div id="tasks" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {{ range .tasks }}
-        <div class="task bg-white rounded-lg shadow-md p-6" id="task-{{ .ID }}">
+       <div class="task bg-white rounded-lg shadow-md p-6" id="task-{{ .ID }}">
             <h2 class="text-xl font-semibold mb-4 text-gray-700">{{ .Title }}</h2>
             <p class="text-gray-600 mb-4">Status: 
                 <span class="px-2 py-1 rounded-full text-sm 
@@ -22,15 +22,35 @@
                     {{ .Status }}
                 </span>
             </p>
-            <button 
-                class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
-                hx-patch="/tasks/{{ .ID }}/status?status=COMPLETED" 
-                hx-target="#task-{{ .ID }}" 
-                hx-swap="outerHTML">
-                Mark as Complete
-            </button>
+            <div class="flex flex-col space-y-4">
+                <select 
+                    class="w-full p-2 border border-gray-300 rounded-lg"
+                    id="status-select-{{ .ID }}"
+                    name="status">
+                    <option value="ASSIGNED" {{if eq .Status "ASSIGNED"}}selected{{end}}>Assigned</option>
+                    <option value="STARTED" {{if eq .Status "STARTED"}}selected{{end}}>Started</option>
+                    <option value="SUSPENDED" {{if eq .Status "SUSPENDED"}}selected{{end}}>Suspended</option>
+                    <option value="COMPLETED" {{if eq .Status "COMPLETED"}}selected{{end}}>Completed</option>
+                </select>
+                <button 
+                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+                    hx-patch="/tasks/{{ .ID }}/status"
+                    hx-target="#task-{{ .ID }}"
+                    hx-swap="outerHTML"
+                    hx-include="#status-select-{{ .ID }}">
+                    Update Status
+                </button>
+            </div>
         </div>
         {{ end }}
     </div>
 </body>
+
+<script>
+    function updateStatus(button) {
+        const select = document.getElementById('status-select-{{ .ID }}');
+        const status = select.value;
+        button.setAttribute('hx-patch', `/tasks/{{ .ID }}/status?status=${status}`);
+    }
+</script>
 </html>
