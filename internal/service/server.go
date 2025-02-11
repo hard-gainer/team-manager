@@ -1,8 +1,11 @@
 package service
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	db "github.com/hard-gainer/task-tracker/internal/db/sqlc"
+	"github.com/hard-gainer/task-tracker/internal/util"
 )
 
 type Server struct {
@@ -15,10 +18,11 @@ func NewServer(store db.Store) *Server {
 	router := gin.Default()
 
 	router.LoadHTMLGlob("templates/*")
-    // router.Static("/static", "./static")
+	// router.Static("/static", "./static")
 
 	registerTaskRoutes(server, router)
 	router.GET("/dashboard", server.showDashboard)
+	router.GET("/statistics", server.showStatistics)
 
 	server.router = router
 	return server
@@ -39,6 +43,20 @@ func registerTaskRoutes(server *Server, router *gin.Engine) {
 
 func (server *Server) Start(address string) error {
 	return server.router.Run(address)
+}
+
+func (server *Server) showStatistics(ctx *gin.Context) {
+	ctx.HTML(http.StatusOK, "statistics.html", gin.H{
+		"active": "statistics",
+	})
+}
+
+func (server *Server) showDashboard(ctx *gin.Context) {
+	tasks, _ := server.store.ListEmployeeTasks(ctx, util.ToNullInt4(1))
+	ctx.HTML(http.StatusOK, "dashboard.html", gin.H{
+		"tasks": tasks,
+        "active": "dashboard",
+	})
 }
 
 func errorResponse(err error) gin.H {
