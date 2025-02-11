@@ -22,6 +22,7 @@ CREATE TABLE "tasks" (
     description TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT (now()),
     due_to TIMESTAMPTZ NOT NULL,
+    time_spent BIGINT DEFAULT 0,
     status VARCHAR(50) NOT NULL CHECK (status IN ('ASSIGNED', 'STARTED', 'SUSPENDED', 'COMPLETED')) NOT NULL,
     priority VARCHAR(50) CHECK (priority IN ('LOW', 'MEDIUM', 'HIGH', 'CRITICAL')) NOT NULL,
     project_id INT REFERENCES projects(id) ON DELETE CASCADE,

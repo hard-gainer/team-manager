@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	db "github.com/hard-gainer/task-tracker/internal/db/sqlc"
+	tmpl "github.com/hard-gainer/task-tracker/internal/template"
 	"github.com/hard-gainer/task-tracker/internal/util"
 )
 
@@ -17,8 +18,9 @@ func NewServer(store db.Store) *Server {
 	server := &Server{store: store}
 	router := gin.Default()
 
+	router.SetFuncMap(tmpl.GetTemplateFuncs())
 	router.LoadHTMLGlob("templates/*")
-	// router.Static("/static", "./static")
+	router.Static("/static", "./static")
 
 	registerTaskRoutes(server, router)
 	router.GET("/dashboard", server.showDashboard)
@@ -37,6 +39,7 @@ func registerTaskRoutes(server *Server, router *gin.Engine) {
 	router.PATCH("/tasks/:id/title", server.updateTaskTitle)
 	router.PATCH("/tasks/:id/description", server.updateTaskDescription)
 	router.PATCH("/tasks/:id/deadline", server.updateTaskDeadline)
+	router.PATCH("/tasks/:id/time", server.updateTaskTimeSpent)
 	router.PATCH("/tasks/:id/status", server.updateTaskStatus)
 	router.PATCH("/tasks/:id/priority", server.updateTaskPriority)
 }
@@ -54,8 +57,8 @@ func (server *Server) showStatistics(ctx *gin.Context) {
 func (server *Server) showDashboard(ctx *gin.Context) {
 	tasks, _ := server.store.ListEmployeeTasks(ctx, util.ToNullInt4(1))
 	ctx.HTML(http.StatusOK, "dashboard.html", gin.H{
-		"tasks": tasks,
-        "active": "dashboard",
+		"tasks":  tasks,
+		"active": "dashboard",
 	})
 }
 

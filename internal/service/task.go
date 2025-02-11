@@ -210,6 +210,52 @@ func (server *Server) updateTaskDeadline(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, task)
 }
 
+func (server *Server) updateTaskTimeSpent(ctx *gin.Context) {
+    idParam := ctx.Param("id")
+    id, err := strconv.ParseInt(idParam, 10, 64)
+    if err != nil {
+        ctx.JSON(http.StatusBadRequest, errorResponse(err))
+        return
+    }
+
+    timeParam := ctx.PostForm("time")
+    if timeParam == "" {
+        timeParam = ctx.Query("time")
+    }
+
+    if timeParam == "" {
+        ctx.JSON(http.StatusBadRequest, gin.H{"error": "time is required"})
+        return
+    }
+
+    timeSpent, err := strconv.ParseInt(timeParam, 10, 64)
+    if err != nil {
+        ctx.JSON(http.StatusBadRequest, errorResponse(err))
+        return
+    }
+
+    if timeSpent < 0 {
+        ctx.JSON(http.StatusBadRequest, gin.H{"error": "time must be a positive number"})
+        return
+    }
+
+    arg := db.UpdateTaskTimeSpentParams{
+        ID:        id,
+        TimeSpent: util.ToNullInt8(timeSpent),
+    }
+
+    task, err := server.store.UpdateTaskTimeSpent(ctx, arg)
+    if err != nil {
+        ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+        return
+    }
+
+    ctx.JSON(http.StatusOK, gin.H{
+		"timeSpent": task.TimeSpent,
+        "status":    "success",
+	})
+}
+
 func (server *Server) updateTaskStatus(ctx *gin.Context) {
 	idParam := ctx.Param("id")
 	id, err := strconv.ParseInt(idParam, 10, 64)

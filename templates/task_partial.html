@@ -5,12 +5,16 @@
             <!-- Play/Pause Button -->
             <button 
                 class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                data-task-id="{{ .ID }}"
+                data-action="toggle-timer"
                 hx-patch="/tasks/{{ .ID }}/status"
                 hx-target="#task-{{ .ID }}"
                 hx-swap="outerHTML"
                 {{if eq .Status "STARTED"}}
+                    data-timer-state="running"
                     hx-vals='{"status": "SUSPENDED"}'
                 {{else}}
+                    data-timer-state="stopped"
                     hx-vals='{"status": "STARTED"}'
                 {{end}}>
                 {{if eq .Status "STARTED"}}
@@ -20,7 +24,7 @@
                     </svg>
                 {{else}}
                     <!-- Play Icon -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                     </svg>
                 {{end}}
@@ -41,14 +45,25 @@
         </div>
     </div>
 
-    <p class="text-gray-600 mb-4">Status: 
-        <span class="px-2 py-1 rounded-full text-sm 
-            {{if eq .Status "COMPLETED"}}bg-green-100 text-green-800
-            {{else if eq .Status "STARTED"}}bg-blue-100 text-blue-800
-            {{else if eq .Status "SUSPENDED"}}bg-yellow-100 text-yellow-800
-            {{else}}bg-gray-100 text-gray-800{{end}}">
-            {{ .Status }}
-        </span>
-    </p>
+    <div class="flex items-center space-x-4 mb-4">
+        <p class="text-gray-600">Status: 
+            <span class="px-2 py-1 rounded-full text-sm 
+                {{if eq .Status "COMPLETED"}}bg-green-100 text-green-800
+                {{else if eq .Status "STARTED"}}bg-blue-100 text-blue-800
+                {{else if eq .Status "SUSPENDED"}}bg-yellow-100 text-yellow-800
+                {{else}}bg-gray-100 text-gray-800{{end}}">
+                {{ .Status }}
+            </span>
+        </p>
+        <div class="flex items-center">
+            <span class="text-gray-600 mr-2">Time spent:</span>
+            <span id="timer-{{ .ID }}" 
+                  class="font-mono" 
+                  data-initial-time="{{ .TimeSpent.Int64 }}"
+                  data-task-id="{{ .ID }}"
+                  data-status="{{ .Status }}">
+                {{ formatDuration .TimeSpent }}
+            </span>
+        </div>
+    </div>
 </div>
-

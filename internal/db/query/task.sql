@@ -45,6 +45,12 @@ SET due_to = $2
 WHERE id = $1
 RETURNING *;
 
+-- name: UpdateTaskTimeSpent :one
+UPDATE tasks
+SET time_spent = $2
+WHERE id = $1
+RETURNING *;
+
 -- name: UpdateTaskStatus :one
 UPDATE tasks
 SET status = $2

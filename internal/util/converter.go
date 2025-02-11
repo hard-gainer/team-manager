@@ -8,3 +8,10 @@ func ToNullInt4(i int32) pgtype.Int4 {
 		Valid: true,
 	}
 }
+
+func ToNullInt8(i int64) pgtype.Int8 {
+	return pgtype.Int8{
+		Int64: int64(i),
+		Valid: true,
+	}
+}

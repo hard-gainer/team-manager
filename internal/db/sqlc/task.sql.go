@@ -24,7 +24,7 @@ INSERT INTO tasks (
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7
 )
-RETURNING id, title, description, created_at, due_to, status, priority, project_id, assigned_to
+RETURNING id, title, description, created_at, due_to, time_spent, status, priority, project_id, assigned_to
 `
 
 type CreateTaskParams struct {
@@ -54,6 +54,7 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		&i.Description,
 		&i.CreatedAt,
 		&i.DueTo,
+		&i.TimeSpent,
 		&i.Status,
 		&i.Priority,
 		&i.ProjectID,
@@ -73,7 +74,7 @@ func (q *Queries) DeleteTask(ctx context.Context, id int64) error {
 }
 
 const getTask = `-- name: GetTask :one
-SELECT id, title, description, created_at, due_to, status, priority, project_id, assigned_to FROM tasks
+SELECT id, title, description, created_at, due_to, time_spent, status, priority, project_id, assigned_to FROM tasks
 WHERE id = $1 LIMIT 1
 `
 
@@ -86,6 +87,7 @@ func (q *Queries) GetTask(ctx context.Context, id int64) (Task, error) {
 		&i.Description,
 		&i.CreatedAt,
 		&i.DueTo,
+		&i.TimeSpent,
 		&i.Status,
 		&i.Priority,
 		&i.ProjectID,
@@ -95,7 +97,7 @@ func (q *Queries) GetTask(ctx context.Context, id int64) (Task, error) {
 }
 
 const listEmployeeTasks = `-- name: ListEmployeeTasks :many
-SELECT id, title, description, created_at, due_to, status, priority, project_id, assigned_to FROM tasks
+SELECT id, title, description, created_at, due_to, time_spent, status, priority, project_id, assigned_to FROM tasks
 WHERE assigned_to = $1
 `
 
@@ -114,6 +116,7 @@ func (q *Queries) ListEmployeeTasks(ctx context.Context, assignedTo pgtype.Int4)
 			&i.Description,
 			&i.CreatedAt,
 			&i.DueTo,
+			&i.TimeSpent,
 			&i.Status,
 			&i.Priority,
 			&i.ProjectID,
@@ -130,7 +133,7 @@ func (q *Queries) ListEmployeeTasks(ctx context.Context, assignedTo pgtype.Int4)
 }
 
 const listProjectTasks = `-- name: ListProjectTasks :many
-SELECT id, title, description, created_at, due_to, status, priority, project_id, assigned_to FROM tasks
+SELECT id, title, description, created_at, due_to, time_spent, status, priority, project_id, assigned_to FROM tasks
 WHERE project_id = $1
 `
 
@@ -149,6 +152,7 @@ func (q *Queries) ListProjectTasks(ctx context.Context, projectID pgtype.Int4) (
 			&i.Description,
 			&i.CreatedAt,
 			&i.DueTo,
+			&i.TimeSpent,
 			&i.Status,
 			&i.Priority,
 			&i.ProjectID,
@@ -165,7 +169,7 @@ func (q *Queries) ListProjectTasks(ctx context.Context, projectID pgtype.Int4) (
 }
 
 const listTasks = `-- name: ListTasks :many
-SELECT id, title, description, created_at, due_to, status, priority, project_id, assigned_to FROM tasks
+SELECT id, title, description, created_at, due_to, time_spent, status, priority, project_id, assigned_to FROM tasks
 `
 
 func (q *Queries) ListTasks(ctx context.Context) ([]Task, error) {
@@ -183,6 +187,7 @@ func (q *Queries) ListTasks(ctx context.Context) ([]Task, error) {
 			&i.Description,
 			&i.CreatedAt,
 			&i.DueTo,
+			&i.TimeSpent,
 			&i.Status,
 			&i.Priority,
 			&i.ProjectID,
@@ -202,7 +207,7 @@ const updateTaskDeadline = `-- name: UpdateTaskDeadline :one
 UPDATE tasks
 SET due_to = $2
 WHERE id = $1
-RETURNING id, title, description, created_at, due_to, status, priority, project_id, assigned_to
+RETURNING id, title, description, created_at, due_to, time_spent, status, priority, project_id, assigned_to
 `
 
 type UpdateTaskDeadlineParams struct {
@@ -219,6 +224,7 @@ func (q *Queries) UpdateTaskDeadline(ctx context.Context, arg UpdateTaskDeadline
 		&i.Description,
 		&i.CreatedAt,
 		&i.DueTo,
+		&i.TimeSpent,
 		&i.Status,
 		&i.Priority,
 		&i.ProjectID,
@@ -231,7 +237,7 @@ const updateTaskDescription = `-- name: UpdateTaskDescription :one
 UPDATE tasks
 SET description = $2
 WHERE id = $1
-RETURNING id, title, description, created_at, due_to, status, priority, project_id, assigned_to
+RETURNING id, title, description, created_at, due_to, time_spent, status, priority, project_id, assigned_to
 `
 
 type UpdateTaskDescriptionParams struct {
@@ -248,6 +254,7 @@ func (q *Queries) UpdateTaskDescription(ctx context.Context, arg UpdateTaskDescr
 		&i.Description,
 		&i.CreatedAt,
 		&i.DueTo,
+		&i.TimeSpent,
 		&i.Status,
 		&i.Priority,
 		&i.ProjectID,
@@ -260,7 +267,7 @@ const updateTaskPriority = `-- name: UpdateTaskPriority :one
 UPDATE tasks
 SET priority = $2
 WHERE id = $1
-RETURNING id, title, description, created_at, due_to, status, priority, project_id, assigned_to
+RETURNING id, title, description, created_at, due_to, time_spent, status, priority, project_id, assigned_to
 `
 
 type UpdateTaskPriorityParams struct {
@@ -277,6 +284,7 @@ func (q *Queries) UpdateTaskPriority(ctx context.Context, arg UpdateTaskPriority
 		&i.Description,
 		&i.CreatedAt,
 		&i.DueTo,
+		&i.TimeSpent,
 		&i.Status,
 		&i.Priority,
 		&i.ProjectID,
@@ -289,7 +297,7 @@ const updateTaskStatus = `-- name: UpdateTaskStatus :one
 UPDATE tasks
 SET status = $2
 WHERE id = $1
-RETURNING id, title, description, created_at, due_to, status, priority, project_id, assigned_to
+RETURNING id, title, description, created_at, due_to, time_spent, status, priority, project_id, assigned_to
 `
 
 type UpdateTaskStatusParams struct {
@@ -306,6 +314,37 @@ func (q *Queries) UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusPara
 		&i.Description,
 		&i.CreatedAt,
 		&i.DueTo,
+		&i.TimeSpent,
+		&i.Status,
+		&i.Priority,
+		&i.ProjectID,
+		&i.AssignedTo,
+	)
+	return i, err
+}
+
+const updateTaskTimeSpent = `-- name: UpdateTaskTimeSpent :one
+UPDATE tasks
+SET time_spent = $2
+WHERE id = $1
+RETURNING id, title, description, created_at, due_to, time_spent, status, priority, project_id, assigned_to
+`
+
+type UpdateTaskTimeSpentParams struct {
+	ID        int64       `json:"id"`
+	TimeSpent pgtype.Int8 `json:"time_spent"`
+}
+
+func (q *Queries) UpdateTaskTimeSpent(ctx context.Context, arg UpdateTaskTimeSpentParams) (Task, error) {
+	row := q.db.QueryRow(ctx, updateTaskTimeSpent, arg.ID, arg.TimeSpent)
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.CreatedAt,
+		&i.DueTo,
+		&i.TimeSpent,
 		&i.Status,
 		&i.Priority,
 		&i.ProjectID,
@@ -318,7 +357,7 @@ const updateTaskTitle = `-- name: UpdateTaskTitle :one
 UPDATE tasks
 SET title = $2
 WHERE id = $1
-RETURNING id, title, description, created_at, due_to, status, priority, project_id, assigned_to
+RETURNING id, title, description, created_at, due_to, time_spent, status, priority, project_id, assigned_to
 `
 
 type UpdateTaskTitleParams struct {
@@ -335,6 +374,7 @@ func (q *Queries) UpdateTaskTitle(ctx context.Context, arg UpdateTaskTitleParams
 		&i.Description,
 		&i.CreatedAt,
 		&i.DueTo,
+		&i.TimeSpent,
 		&i.Status,
 		&i.Priority,
 		&i.ProjectID,

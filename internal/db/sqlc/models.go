@@ -43,6 +43,7 @@ type Task struct {
 	Description string      `json:"description"`
 	CreatedAt   time.Time   `json:"created_at"`
 	DueTo       time.Time   `json:"due_to"`
+	TimeSpent   pgtype.Int8 `json:"time_spent"`
 	Status      string      `json:"status"`
 	Priority    string      `json:"priority"`
 	ProjectID   pgtype.Int4 `json:"project_id"`

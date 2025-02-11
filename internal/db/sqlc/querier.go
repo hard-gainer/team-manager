@@ -36,6 +36,7 @@ type Querier interface {
 	UpdateTaskDescription(ctx context.Context, arg UpdateTaskDescriptionParams) (Task, error)
 	UpdateTaskPriority(ctx context.Context, arg UpdateTaskPriorityParams) (Task, error)
 	UpdateTaskStatus(ctx context.Context, arg UpdateTaskStatusParams) (Task, error)
+	UpdateTaskTimeSpent(ctx context.Context, arg UpdateTaskTimeSpentParams) (Task, error)
 	UpdateTaskTitle(ctx context.Context, arg UpdateTaskTitleParams) (Task, error)
 }
 
