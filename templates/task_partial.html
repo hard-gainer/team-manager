@@ -1,5 +1,46 @@
 <div class="task bg-white rounded-lg shadow-md p-6" id="task-{{ .ID }}">
-    <h2 class="text-xl font-semibold mb-4 text-gray-700">{{ .Title }}</h2>
+    <div class="flex justify-between items-start mb-4">
+        <h2 class="text-xl font-semibold text-gray-700">{{ .Title }}</h2>
+        <div class="flex space-x-2">
+            <!-- Play/Pause Button -->
+            <button 
+                class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                hx-patch="/tasks/{{ .ID }}/status"
+                hx-target="#task-{{ .ID }}"
+                hx-swap="outerHTML"
+                {{if eq .Status "STARTED"}}
+                    hx-vals='{"status": "SUSPENDED"}'
+                {{else}}
+                    hx-vals='{"status": "STARTED"}'
+                {{end}}>
+                {{if eq .Status "STARTED"}}
+                    <!-- Pause Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6" />
+                    </svg>
+                {{else}}
+                    <!-- Play Icon -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    </svg>
+                {{end}}
+            </button>
+
+            <!-- Complete Button (Checkmark) -->
+            <button 
+                class="p-2 rounded-full hover:bg-gray-100 transition-colors {{if eq .Status "COMPLETED"}}opacity-50 cursor-not-allowed{{end}}"
+                hx-patch="/tasks/{{ .ID }}/status"
+                hx-target="#task-{{ .ID }}"
+                hx-swap="outerHTML"
+                hx-vals='{"status": "COMPLETED"}'
+                {{if eq .Status "COMPLETED"}}disabled{{end}}>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
     <p class="text-gray-600 mb-4">Status: 
         <span class="px-2 py-1 rounded-full text-sm 
             {{if eq .Status "COMPLETED"}}bg-green-100 text-green-800
@@ -9,24 +50,5 @@
             {{ .Status }}
         </span>
     </p>
-    <div class="flex flex-col space-y-4">
-        <select 
-            class="w-full p-2 border border-gray-300 rounded-lg"
-            id="status-select-{{ .ID }}"
-            name="status">
-            <option value="ASSIGNED" {{if eq .Status "ASSIGNED"}}selected{{end}}>Assigned</option>
-            <option value="STARTED" {{if eq .Status "STARTED"}}selected{{end}}>Started</option>
-            <option value="SUSPENDED" {{if eq .Status "SUSPENDED"}}selected{{end}}>Suspended</option>
-            <option value="COMPLETED" {{if eq .Status "COMPLETED"}}selected{{end}}>Completed</option>
-        </select>
-        <button 
-            class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
-            hx-patch="/tasks/{{ .ID }}/status"
-            hx-target="#task-{{ .ID }}"
-            hx-swap="outerHTML"
-            hx-include="#status-select-{{ .ID }}">
-            Update Status
-        </button>
-    </div>
 </div>
 
