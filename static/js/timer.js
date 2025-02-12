@@ -164,13 +164,29 @@ function handleHtmxBeforeSwap(evt) {
 
 function handleHtmxAfterSwap(evt) {
     const taskId = evt.detail.target.id.replace('task-', '');
-    const timer = timers.get(taskId);
-    if (timer && timer.isRunning) {
-        return;
-    }
+    const task = document.getElementById(`task-${taskId}`);
+    if (!task) return;
 
-    // инициализируем таймер с актуальным значением времени
-    initializeTimer(taskId);
+    const status = task.querySelector('[data-status]')?.dataset.status;
+    
+    if (status === 'COMPLETED') {
+        const timer = timers.get(taskId);
+        if (timer && timer.isRunning) {
+            timer.pause();
+        }
+        // Блокируем кнопку Play
+        const playButton = task.querySelector('[data-action="toggle-timer"]');
+        if (playButton) {
+            playButton.disabled = true;
+            playButton.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    } else {
+        // инициализируем таймер с актуальным значением времени
+        const timer = timers.get(taskId);
+        if (!timer || !timer.isRunning) {
+            initializeTimer(taskId);
+        }
+    }
 }
 
 // Инициализация всех обработчиков событий
