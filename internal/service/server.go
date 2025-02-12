@@ -42,6 +42,7 @@ func registerTaskRoutes(server *Server, router *gin.Engine) {
 	router.PATCH("/tasks/:id/time", server.updateTaskTimeSpent)
 	router.PATCH("/tasks/:id/status", server.updateTaskStatus)
 	router.PATCH("/tasks/:id/priority", server.updateTaskPriority)
+	router.GET("/tasks/:id/confirm", server.showTaskConfirm)
 }
 
 func (server *Server) Start(address string) error {
@@ -59,6 +60,13 @@ func (server *Server) showDashboard(ctx *gin.Context) {
 	ctx.HTML(http.StatusOK, "dashboard.html", gin.H{
 		"tasks":  tasks,
 		"active": "dashboard",
+	})
+}
+
+func (server *Server) showTaskConfirm(ctx *gin.Context) {
+	id := ctx.Param("id")
+	ctx.HTML(http.StatusOK, "confirm_modal.html", gin.H{
+		"ID": id,
 	})
 }
 

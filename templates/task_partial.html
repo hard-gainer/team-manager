@@ -33,10 +33,9 @@
             <!-- Complete Button (Checkmark) -->
             <button 
                 class="p-2 rounded-full hover:bg-gray-100 transition-colors {{if eq .Status "COMPLETED"}}opacity-50 cursor-not-allowed{{end}}"
-                hx-patch="/tasks/{{ .ID }}/status"
-                hx-target="#task-{{ .ID }}"
-                hx-swap="outerHTML"
-                hx-vals='{"status": "COMPLETED"}'
+                hx-get="/tasks/{{ .ID }}/confirm"
+                hx-target="body"
+                hx-swap="beforeend"
                 {{if eq .Status "COMPLETED"}}disabled{{end}}>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
