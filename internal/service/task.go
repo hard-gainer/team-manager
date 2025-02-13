@@ -210,82 +210,36 @@ func (server *Server) updateTaskDeadline(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, task)
 }
 
-func (server *Server) updateTaskTimeSpent(ctx *gin.Context) {
-    idParam := ctx.Param("id")
-    id, err := strconv.ParseInt(idParam, 10, 64)
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, errorResponse(err))
-        return
-    }
-
-    timeParam := ctx.PostForm("time")
-    if timeParam == "" {
-        timeParam = ctx.Query("time")
-    }
-
-    if timeParam == "" {
-        ctx.JSON(http.StatusBadRequest, gin.H{"error": "time is required"})
-        return
-    }
-
-    timeSpent, err := strconv.ParseInt(timeParam, 10, 64)
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, errorResponse(err))
-        return
-    }
-
-    if timeSpent < 0 {
-        ctx.JSON(http.StatusBadRequest, gin.H{"error": "time must be a positive number"})
-        return
-    }
-
-    arg := db.UpdateTaskTimeSpentParams{
-        ID:        id,
-        TimeSpent: util.ToNullInt8(timeSpent),
-    }
-
-    task, err := server.store.UpdateTaskTimeSpent(ctx, arg)
-    if err != nil {
-        ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-        return
-    }
-
-    ctx.JSON(http.StatusOK, gin.H{
-		"timeSpent": task.TimeSpent,
-        "status":    "success",
-	})
+type updateTaskStatusQuery struct {
+	Status string `form:"status" binding:"required,oneof=ASSIGNED STARTED SUSPENDED COMPLETED"`
 }
 
 func (server *Server) updateTaskStatus(ctx *gin.Context) {
 	idParam := ctx.Param("id")
 	id, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		ctx.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
 		return
 	}
 
-	status := ctx.PostForm("status")
-	if status == "" {
-		status = ctx.Query("status")
-	}
-
-	if status == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "status is required"})
-		return
-	}
+    var query updateTaskStatusQuery
+    if err := ctx.ShouldBindQuery(&query); err != nil {
+        ctx.HTML(http.StatusBadRequest, "error.html", gin.H{"error": err.Error()})
+        return
+    }
 
 	arg := db.UpdateTaskStatusParams{
 		ID:     id,
-		Status: status,
+		Status: query.Status,
 	}
 
 	task, err := server.store.UpdateTaskStatus(ctx, arg)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			ctx.HTML(http.StatusNotFound, "error.html", gin.H{"error": "Task not found"})
 			return
 		}
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.HTML(http.StatusInternalServerError, "error.html", gin.H{"error": err.Error()})
 		return
 	}
 
