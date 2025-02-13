@@ -1,0 +1,59 @@
+<div id="taskDetailsModal-{{ .ID }}" 
+     class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50"
+     role="dialog"
+     aria-modal="true">
+    <div class="relative top-20 mx-auto p-8 border w-3/4 max-w-4xl shadow-lg rounded-md bg-white">
+        <!-- Header with close button -->
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold text-gray-900">{{ .Title }}</h2>
+            <button 
+                class="p-2 hover:bg-gray-100 rounded-full"
+                onclick="this.closest('#taskDetailsModal-{{ .ID }}').remove()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Task details -->
+        <div class="grid grid-cols-2 gap-8">
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Детали задачи</h3>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm text-gray-500">Статус</p>
+                        <span class="px-2 py-1 rounded-full text-sm inline-block mt-1
+                            {{if eq .Status "COMPLETED"}}bg-green-100 text-green-800
+                            {{else if eq .Status "STARTED"}}bg-blue-100 text-blue-800
+                            {{else if eq .Status "SUSPENDED"}}bg-yellow-100 text-yellow-800
+                            {{else}}bg-gray-100 text-gray-800{{end}}">
+                            {{ .Status }}
+                        </span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Затраченное время</p>
+                        <span class="font-mono">{{ formatDuration .TimeSpent }}</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Срок выполнения</p>
+                        <span>{{ .DueTo.Format "02.01.2006" }}</span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Приоритет</p>
+                        <span class="px-2 py-1 rounded-full text-sm inline-block mt-1
+                            {{if eq .Priority "CRITICAL"}}bg-red-100 text-red-800
+                            {{else if eq .Priority "HIGH"}}bg-orange-100 text-orange-800
+                            {{else if eq .Priority "MEDIUM"}}bg-yellow-100 text-yellow-800
+                            {{else}}bg-green-100 text-green-800{{end}}">
+                            {{ .Priority }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold mb-4">Описание</h3>
+                <p class="text-gray-600 whitespace-pre-wrap">{{ .Description }}</p>
+            </div>
+        </div>
+    </div>
+</div>

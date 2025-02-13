@@ -1,12 +1,9 @@
 package service
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	db "github.com/hard-gainer/task-tracker/internal/db/sqlc"
 	tmpl "github.com/hard-gainer/task-tracker/internal/template"
-	"github.com/hard-gainer/task-tracker/internal/util"
 )
 
 type Server struct {
@@ -42,32 +39,14 @@ func registerTaskRoutes(server *Server, router *gin.Engine) {
 	router.PATCH("/tasks/:id/time", server.updateTaskTimeSpent)
 	router.PATCH("/tasks/:id/status", server.updateTaskStatus)
 	router.PATCH("/tasks/:id/priority", server.updateTaskPriority)
+
+	// html routes	
 	router.GET("/tasks/:id/confirm", server.showTaskConfirm)
+	router.GET("/tasks/:id/details", server.showTaskDetails)
 }
 
 func (server *Server) Start(address string) error {
 	return server.router.Run(address)
-}
-
-func (server *Server) showStatistics(ctx *gin.Context) {
-	ctx.HTML(http.StatusOK, "statistics.html", gin.H{
-		"active": "statistics",
-	})
-}
-
-func (server *Server) showDashboard(ctx *gin.Context) {
-	tasks, _ := server.store.ListEmployeeTasks(ctx, util.ToNullInt4(1))
-	ctx.HTML(http.StatusOK, "dashboard.html", gin.H{
-		"tasks":  tasks,
-		"active": "dashboard",
-	})
-}
-
-func (server *Server) showTaskConfirm(ctx *gin.Context) {
-	id := ctx.Param("id")
-	ctx.HTML(http.StatusOK, "confirm_modal.html", gin.H{
-		"ID": id,
-	})
 }
 
 func errorResponse(err error) gin.H {
