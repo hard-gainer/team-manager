@@ -29,6 +29,7 @@ func NewServer(store db.Store) *Server {
 
 func registerTaskRoutes(server *Server, router *gin.Engine) {
 	router.GET("/tasks/:id", server.getTask)
+    router.GET("/tasks/:id/time", server.getTaskTime)
 	router.GET("/tasks", server.listTasks)
 	router.GET("/projects/:id/tasks", server.listProjectTasks)
 	router.GET("/employees/:id/tasks", server.listEmployeeTasks)

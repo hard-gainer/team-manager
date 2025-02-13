@@ -15,12 +15,14 @@
                     hx-target="#task-{{ .ID }}"
                     hx-swap="outerHTML"
                     hx-vals='{"status": "COMPLETED"}'
-                    hx-on::after-request="htmx.remove('#confirmModal-{{ .ID }}')"
-                    hx-on::before-request="
-                        const timer = timers.get('{{ .ID }}');
-                        if (timer && timer.isRunning) {
-                            timer.pause();
-                        }">
+                    hx-on="
+                        htmx:beforeRequest: 
+                            const timer = timers.get('{{ .ID }}');
+                            if (timer && timer.isRunning) {
+                                timer.pause();
+                            }
+                        htmx:afterRequest: 
+                            htmx.remove('#confirmModal-{{ .ID }}')">
                     Да
                 </button>
                 <button 

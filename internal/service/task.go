@@ -68,6 +68,28 @@ func (server *Server) getTask(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, task)
 }
 
+func (server *Server) getTaskTime(ctx *gin.Context) {
+    id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+    if err != nil {
+        ctx.JSON(http.StatusBadRequest, errorResponse(err))
+        return
+    }
+
+    task, err := server.store.GetTask(ctx, id)
+    if err != nil {
+        if err == sql.ErrNoRows {
+            ctx.JSON(http.StatusNotFound, errorResponse(err))
+            return
+        }
+        ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+        return
+    }
+
+    ctx.JSON(http.StatusOK, gin.H{
+        "timeSpent": task.TimeSpent.Int64,
+    })
+}
+
 func (server *Server) listTasks(ctx *gin.Context) {
 	tasks, err := server.store.ListTasks(ctx)
 	if err != nil {
