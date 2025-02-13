@@ -37,13 +37,15 @@
                     <div class="flex space-x-2">
                         <!-- Кнопка Play/Pause -->
                         <button 
-                            class="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                            class="p-2 rounded-full hover:bg-gray-100 transition-colors {{if eq .Status "COMPLETED"}}opacity-50 cursor-not-allowed{{end}}"
                             data-task-id="{{ .ID }}"
                             data-action="toggle-timer"
                             hx-patch="/tasks/{{ .ID }}/status"
                             hx-target="#task-{{ .ID }}"
                             hx-swap="outerHTML"
-                            {{if eq .Status "STARTED"}}
+                            {{if eq .Status "COMPLETED"}}
+                                disabled
+                            {{else if eq .Status "STARTED"}}
                                 data-timer-state="running"
                                 hx-vals='{"status": "SUSPENDED"}'
                             {{else}}
