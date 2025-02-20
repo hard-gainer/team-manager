@@ -2,34 +2,51 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
+	auth "github.com/hard-gainer/task-tracker/internal/auth"
 	db "github.com/hard-gainer/task-tracker/internal/db/sqlc"
 	tmpl "github.com/hard-gainer/task-tracker/internal/template"
 )
 
 type Server struct {
-	router *gin.Engine
-	store  db.Store
+	router     *gin.Engine
+	store      db.Store
+	authClient auth.AuthClient
 }
 
-func NewServer(store db.Store) *Server {
-	server := &Server{store: store}
+func NewServer(store db.Store, authClient auth.AuthClient) *Server {
+	server := &Server{
+		store:      store,
+		authClient: authClient,
+	}
 	router := gin.Default()
 
 	router.SetFuncMap(tmpl.GetTemplateFuncs())
 	router.LoadHTMLGlob("templates/*")
 	router.Static("/static", "./static")
 
-	registerTaskRoutes(server, router)
-	router.GET("/dashboard", server.showDashboard)
-	router.GET("/statistics", server.showStatistics)
+	// Protected routes
+	authorized := router.Group("/")
+	authorized.Use(server.authMiddleware())
+	{
+		authorized.GET("/dashboard", server.showDashboard)
+		authorized.GET("/statistics", server.showStatistics)
+		registerTaskRoutes(server, authorized)
+	}
+
+	// Auth routes
+	router.GET("/login", server.showLogin)
+	router.GET("/register", server.showRegister)
+	router.POST("/login", server.handleLogin)
+	router.POST("/register", server.handleRegister)
+	router.POST("/logout", server.handleLogout)
 
 	server.router = router
 	return server
 }
 
-func registerTaskRoutes(server *Server, router *gin.Engine) {
+func registerTaskRoutes(server *Server, router *gin.RouterGroup) {
 	router.GET("/tasks/:id", server.getTask)
-    router.GET("/tasks/:id/time", server.getTaskTime)
+	router.GET("/tasks/:id/time", server.getTaskTime)
 	router.GET("/tasks", server.listTasks)
 	router.GET("/projects/:id/tasks", server.listProjectTasks)
 	router.GET("/employees/:id/tasks", server.listEmployeeTasks)
@@ -41,7 +58,7 @@ func registerTaskRoutes(server *Server, router *gin.Engine) {
 	router.PATCH("/tasks/:id/status", server.updateTaskStatus)
 	router.PATCH("/tasks/:id/priority", server.updateTaskPriority)
 
-	// html routes	
+	// html routes
 	router.GET("/tasks/:id/confirm", server.showTaskConfirm)
 	router.GET("/tasks/:id/details", server.showTaskDetails)
 }
