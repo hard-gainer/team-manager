@@ -49,7 +49,19 @@
 
     <!-- Main Content -->
     <div class="mr-16 p-8">
-        <h1 class="text-3xl font-bold mb-8 text-gray-800">Task Dashboard</h1>
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Task Dashboard</h1>
+            <button 
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+                hx-get="/tasks/create"
+                hx-target="body"
+                hx-swap="beforeend">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>New Task</span>
+            </button>
+        </div>
         <div id="tasks" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {{ range .tasks }}
             <div class="task bg-white rounded-lg shadow-md p-6 min-h-[200px]" id="task-{{ .ID }}">

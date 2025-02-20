@@ -15,11 +15,12 @@ type Querier interface {
 	CreateHistory(ctx context.Context, arg CreateHistoryParams) (History, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
 	CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
-	DeleteEmployee(ctx context.Context, id int64) error
+	DeleteEmployee(ctx context.Context, id int32) error
 	DeleteProject(ctx context.Context, id int64) error
 	DeleteTask(ctx context.Context, id int64) error
-	GetEmployee(ctx context.Context, id int64) (Employee, error)
+	GetEmployee(ctx context.Context, id int32) (Employee, error)
 	GetProject(ctx context.Context, id int64) (Project, error)
+	GetProjectWithParticipants(ctx context.Context, id int64) (GetProjectWithParticipantsRow, error)
 	GetTask(ctx context.Context, id int64) (Task, error)
 	ListEmployeeHistory(ctx context.Context, changedBy pgtype.Int4) ([]History, error)
 	ListEmployeeTasks(ctx context.Context, assignedTo pgtype.Int4) ([]Task, error)
@@ -28,9 +29,10 @@ type Querier interface {
 	ListProjects(ctx context.Context) ([]Project, error)
 	ListTaskHistory(ctx context.Context, taskID pgtype.Int4) ([]History, error)
 	ListTasks(ctx context.Context) ([]Task, error)
-	UpdateEmployeeFirstName(ctx context.Context, arg UpdateEmployeeFirstNameParams) (Employee, error)
-	UpdateEmployeeLastName(ctx context.Context, arg UpdateEmployeeLastNameParams) (Employee, error)
-	UpdateEmployeePassword(ctx context.Context, arg UpdateEmployeePasswordParams) (Employee, error)
+	ListUserProjectsWithParticipants(ctx context.Context, createdBy pgtype.Int4) ([]ListUserProjectsWithParticipantsRow, error)
+	UpdateEmployeeEmail(ctx context.Context, arg UpdateEmployeeEmailParams) (Employee, error)
+	UpdateEmployeeName(ctx context.Context, arg UpdateEmployeeNameParams) (Employee, error)
+	UpdateEmployeeRole(ctx context.Context, arg UpdateEmployeeRoleParams) (Employee, error)
 	UpdateProject(ctx context.Context, arg UpdateProjectParams) (Project, error)
 	UpdateTaskDeadline(ctx context.Context, arg UpdateTaskDeadlineParams) (Task, error)
 	UpdateTaskDescription(ctx context.Context, arg UpdateTaskDescriptionParams) (Task, error)

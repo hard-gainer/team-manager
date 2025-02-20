@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -53,6 +54,49 @@ func (server *Server) showTaskDetails(ctx *gin.Context) {
 	ctx.HTML(http.StatusOK, "task_details.html", task)
 }
 
+// func (server *Server) showCreateTaskForm(ctx *gin.Context) {
+// 	ctx.HTML(http.StatusOK, "create_task_modal.html", nil)
+// }
+
+func (server *Server) showProjects(ctx *gin.Context) {
+	userID := getUserIDFromToken(ctx)
+
+	projects, err := server.store.ListUserProjectsWithParticipants(ctx, util.ToNullInt4(userID))
+	if err != nil {
+		log.Printf("Error loading projects: %v", err)
+
+		ctx.HTML(http.StatusInternalServerError, "error.html", gin.H{
+			"error": "Failed to load projects",
+		})
+		return
+	}
+
+	ctx.HTML(http.StatusOK, "projects.html", gin.H{
+		"projects": projects,
+		"active":   "projects",
+	})
+}
+
+func (server *Server) showProjectDashboard(ctx *gin.Context) {
+	projectID, err := strconv.ParseInt(ctx.Param("projectId"), 10, 32)
+	if err != nil {
+		ctx.Redirect(http.StatusSeeOther, "/projects")
+		return
+	}
+
+	tasks, err := server.store.ListProjectTasks(ctx, util.ToNullInt4(int32(projectID)))
+	if err != nil {
+		ctx.Redirect(http.StatusSeeOther, "/projects")
+		return
+	}
+
+	ctx.HTML(http.StatusOK, "dashboard.html", gin.H{
+		"tasks":     tasks,
+		"active":    "dashboard",
+		"projectID": projectID,
+	})
+}
+
 // Auth handlers
 func (server *Server) showLogin(ctx *gin.Context) {
 	ctx.HTML(http.StatusOK, "login.html", gin.H{})
@@ -75,6 +119,7 @@ func (server *Server) handleRegister(ctx *gin.Context) {
 	}
 
 	authReq := &auth.RegisterRequest{
+		Name:     name,
 		Email:    email,
 		Password: password,
 		IsAdmin:  false,
@@ -110,16 +155,28 @@ func (server *Server) handleLogin(ctx *gin.Context) {
 
 	resp, err := server.authClient.Login(context.Background(), authReq)
 	if err != nil {
-		fmt.Println("error in login")
+		fmt.Printf("Login error: %v\n", err) // Добавляем детальное логирование
 		ctx.HTML(http.StatusOK, "login.html", gin.H{
 			"error": "Invalid credentials",
 		})
 		return
 	}
 
-	fmt.Println("redirecting")
 	ctx.SetCookie("auth_token", resp.Token, 3600*24, "/", "", false, true)
-	ctx.Redirect(http.StatusSeeOther, "/dashboard")
+
+	validateResp, err := server.authClient.ValidateToken(context.Background(), &auth.ValidateTokenRequest{
+		Token: resp.Token,
+	})
+	if err != nil || !validateResp.IsValid {
+		fmt.Printf("Token validation error: %v\n", err)
+		ctx.HTML(http.StatusOK, "login.html", gin.H{
+			"error": "Authentication failed",
+		})
+		return
+	}
+
+	fmt.Printf("Login successful, redirecting with token: %s\n", resp.Token)
+	ctx.Redirect(http.StatusSeeOther, "/projects")
 }
 
 func (server *Server) handleLogout(ctx *gin.Context) {
@@ -130,4 +187,16 @@ func (server *Server) handleLogout(ctx *gin.Context) {
 
 	ctx.SetCookie("auth_token", "", -1, "/", "", false, true)
 	ctx.Redirect(http.StatusSeeOther, "/login")
+}
+
+func getUserIDFromToken(ctx *gin.Context) int32 {
+	userID, exists := ctx.Get("user_id")
+	if !exists {
+		return 0
+	}
+
+	if id, ok := userID.(int32); ok {
+		return id
+	}
+	return 0
 }

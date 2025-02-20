@@ -1,30 +1,29 @@
 -- name: CreateEmployee :one
 INSERT INTO employees (
-    first_name,
-    last_name,
+    id,
+    name,
     email,
-    password_hash,
     role
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4
 )
 RETURNING *;
 
--- name: UpdateEmployeeFirstName :one
+-- name: UpdateEmployeeName :one
 UPDATE employees
-SET first_name = $2
+SET name = $2
 WHERE id = $1
 RETURNING *;
 
--- name: UpdateEmployeeLastName :one
+-- name: UpdateEmployeeEmail :one
 UPDATE employees
-SET last_name = $2 
+SET email = $2 
 WHERE id = $1
 RETURNING *;
 
--- name: UpdateEmployeePassword :one
+-- name: UpdateEmployeeRole :one
 UPDATE employees
-SET password_hash = $2 
+SET role = $2 
 WHERE id = $1
 RETURNING *;
 

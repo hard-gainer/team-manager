@@ -82,6 +82,60 @@ func (q *Queries) GetProject(ctx context.Context, id int64) (Project, error) {
 	return i, err
 }
 
+const getProjectWithParticipants = `-- name: GetProjectWithParticipants :one
+SELECT 
+    p.id, p.title, p.description, p.start_date, p.end_date, p.created_by,
+    COUNT(DISTINCT t.id) as task_count,
+    COALESCE(SUM(t.time_spent), 0) as total_time_spent,
+    COALESCE(
+        json_agg(
+            json_build_object(
+                'id', e.id,
+                'first_name', e.first_name,
+                'last_name', e.last_name,
+                'email', e.email,
+                'role', pp.role
+            )
+        ) FILTER (WHERE e.id IS NOT NULL),
+        '[]'
+    ) as participants
+FROM projects p
+LEFT JOIN project_participants pp ON p.id = pp.project_id
+LEFT JOIN employees e ON pp.user_id = e.id
+LEFT JOIN tasks t ON p.id = t.project_id
+WHERE p.id = $1
+GROUP BY p.id
+`
+
+type GetProjectWithParticipantsRow struct {
+	ID             int64       `json:"id"`
+	Title          string      `json:"title"`
+	Description    string      `json:"description"`
+	StartDate      time.Time   `json:"start_date"`
+	EndDate        time.Time   `json:"end_date"`
+	CreatedBy      pgtype.Int4 `json:"created_by"`
+	TaskCount      int64       `json:"task_count"`
+	TotalTimeSpent interface{} `json:"total_time_spent"`
+	Participants   interface{} `json:"participants"`
+}
+
+func (q *Queries) GetProjectWithParticipants(ctx context.Context, id int64) (GetProjectWithParticipantsRow, error) {
+	row := q.db.QueryRow(ctx, getProjectWithParticipants, id)
+	var i GetProjectWithParticipantsRow
+	err := row.Scan(
+		&i.ID,
+		&i.Title,
+		&i.Description,
+		&i.StartDate,
+		&i.EndDate,
+		&i.CreatedBy,
+		&i.TaskCount,
+		&i.TotalTimeSpent,
+		&i.Participants,
+	)
+	return i, err
+}
+
 const listProjects = `-- name: ListProjects :many
 SELECT id, title, description, start_date, end_date, created_by FROM projects
 `
@@ -102,6 +156,77 @@ func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
 			&i.StartDate,
 			&i.EndDate,
 			&i.CreatedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUserProjectsWithParticipants = `-- name: ListUserProjectsWithParticipants :many
+SELECT 
+    p.id, p.title, p.description, p.start_date, p.end_date, p.created_by,
+    COUNT(DISTINCT t.id) as task_count,
+    COALESCE(SUM(t.time_spent), 0) as total_time_spent,
+    COALESCE(
+        json_agg(
+            json_build_object(
+                'id', e.id,
+                'name', e.name,
+                'email', e.email,
+                'role', pp.role
+            )
+        ) FILTER (WHERE e.id IS NOT NULL),
+        '[]'
+    ) as participants
+FROM projects p
+LEFT JOIN project_participants pp ON p.id = pp.project_id
+LEFT JOIN employees e ON pp.user_id = e.id
+LEFT JOIN tasks t ON p.id = t.project_id
+WHERE p.created_by = $1 
+    OR EXISTS (
+        SELECT 1 FROM project_participants 
+        WHERE project_id = p.id AND user_id = $1
+    )
+GROUP BY p.id
+ORDER BY p.start_date DESC
+`
+
+type ListUserProjectsWithParticipantsRow struct {
+	ID             int64       `json:"id"`
+	Title          string      `json:"title"`
+	Description    string      `json:"description"`
+	StartDate      time.Time   `json:"start_date"`
+	EndDate        time.Time   `json:"end_date"`
+	CreatedBy      pgtype.Int4 `json:"created_by"`
+	TaskCount      int64       `json:"task_count"`
+	TotalTimeSpent interface{} `json:"total_time_spent"`
+	Participants   interface{} `json:"participants"`
+}
+
+func (q *Queries) ListUserProjectsWithParticipants(ctx context.Context, createdBy pgtype.Int4) ([]ListUserProjectsWithParticipantsRow, error) {
+	rows, err := q.db.Query(ctx, listUserProjectsWithParticipants, createdBy)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListUserProjectsWithParticipantsRow{}
+	for rows.Next() {
+		var i ListUserProjectsWithParticipantsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
+			&i.StartDate,
+			&i.EndDate,
+			&i.CreatedBy,
+			&i.TaskCount,
+			&i.TotalTimeSpent,
+			&i.Participants,
 		); err != nil {
 			return nil, err
 		}

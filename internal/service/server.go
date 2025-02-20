@@ -28,6 +28,8 @@ func NewServer(store db.Store, authClient auth.AuthClient) *Server {
 	authorized := router.Group("/")
 	authorized.Use(server.authMiddleware())
 	{
+		authorized.GET("/projects", server.showProjects)
+		authorized.GET("/dashboard/:projectId", server.showProjectDashboard)
 		authorized.GET("/dashboard", server.showDashboard)
 		authorized.GET("/statistics", server.showStatistics)
 		registerTaskRoutes(server, authorized)
@@ -58,9 +60,10 @@ func registerTaskRoutes(server *Server, router *gin.RouterGroup) {
 	router.PATCH("/tasks/:id/status", server.updateTaskStatus)
 	router.PATCH("/tasks/:id/priority", server.updateTaskPriority)
 
-	// html routes
 	router.GET("/tasks/:id/confirm", server.showTaskConfirm)
 	router.GET("/tasks/:id/details", server.showTaskDetails)
+	// router.GET("/tasks/create", server.showCreateTaskForm)
+	// router.POST("/tasks", server.createTask)
 }
 
 func (server *Server) Start(address string) error {

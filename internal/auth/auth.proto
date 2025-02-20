@@ -9,12 +9,14 @@ service Auth {
    rpc Login (LoginRequest) returns (LoginResponse);
    rpc IsAdmin (IsAdminRequest) returns (IsAdminResponse);
    rpc Logout (LogoutRequest) returns (LogoutResponse);
+   rpc ValidateToken (ValidateTokenRequest) returns (ValidateTokenResponse);
 }
 
 message RegisterRequest {
-   string email = 1;
-   string password = 2;
-   bool is_admin = 3;
+   string name = 1;
+   string email = 2;
+   string password = 3;
+   bool is_admin = 4;
 }
 
 message RegisterResponse {
@@ -45,4 +47,13 @@ message LogoutRequest {
 
 message LogoutResponse {
   bool success = 1;
+}
+
+message ValidateTokenRequest {
+    string token = 1;
+}
+
+message ValidateTokenResponse {
+    int32 user_id = 1;
+    bool is_valid = 2;
 }

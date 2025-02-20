@@ -11,12 +11,10 @@ import (
 )
 
 type Employee struct {
-	ID           int64  `json:"id"`
-	FirstName    string `json:"first_name"`
-	LastName     string `json:"last_name"`
-	Email        string `json:"email"`
-	PasswordHash string `json:"password_hash"`
-	Role         string `json:"role"`
+	ID    int32  `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
 }
 
 type History struct {
@@ -35,6 +33,13 @@ type Project struct {
 	StartDate   time.Time   `json:"start_date"`
 	EndDate     time.Time   `json:"end_date"`
 	CreatedBy   pgtype.Int4 `json:"created_by"`
+}
+
+type ProjectParticipant struct {
+	ProjectID int64            `json:"project_id"`
+	UserID    int64            `json:"user_id"`
+	Role      string           `json:"role"`
+	JoinedAt  pgtype.Timestamp `json:"joined_at"`
 }
 
 type Task struct {
