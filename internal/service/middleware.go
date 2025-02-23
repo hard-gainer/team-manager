@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -28,6 +29,10 @@ func (server *Server) authMiddleware() gin.HandlerFunc {
 			ctx.Redirect(http.StatusSeeOther, "/login")
 			ctx.Abort()
 			return
+		}
+
+		if err := server.syncUser(ctx, resp.UserId); err != nil {
+			log.Printf("Failed to sync user: %v", err)
 		}
 
 		ctx.Set("user_id", resp.UserId)
