@@ -101,6 +101,39 @@ func (q *Queries) ListEmployees(ctx context.Context) ([]Employee, error) {
 	return items, nil
 }
 
+const updateEmployee = `-- name: UpdateEmployee :one
+UPDATE employees
+SET name = $2,
+    email = $3,
+    role = $4
+WHERE id = $1
+RETURNING id, name, email, role
+`
+
+type UpdateEmployeeParams struct {
+	ID    int32  `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
+}
+
+func (q *Queries) UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (Employee, error) {
+	row := q.db.QueryRow(ctx, updateEmployee,
+		arg.ID,
+		arg.Name,
+		arg.Email,
+		arg.Role,
+	)
+	var i Employee
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Email,
+		&i.Role,
+	)
+	return i, err
+}
+
 const updateEmployeeEmail = `-- name: UpdateEmployeeEmail :one
 UPDATE employees
 SET email = $2 

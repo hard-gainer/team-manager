@@ -2,9 +2,9 @@ package service
 
 import (
 	"github.com/gin-gonic/gin"
-	auth "github.com/hard-gainer/task-tracker/internal/auth"
-	db "github.com/hard-gainer/task-tracker/internal/db/sqlc"
-	tmpl "github.com/hard-gainer/task-tracker/internal/template"
+	auth "github.com/hard-gainer/team-manager/internal/auth"
+	db "github.com/hard-gainer/team-manager/internal/db/sqlc"
+	tmpl "github.com/hard-gainer/team-manager/internal/template"
 )
 
 type Server struct {

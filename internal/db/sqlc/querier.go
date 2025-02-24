@@ -30,6 +30,7 @@ type Querier interface {
 	ListTaskHistory(ctx context.Context, taskID pgtype.Int4) ([]History, error)
 	ListTasks(ctx context.Context) ([]Task, error)
 	ListUserProjectsWithParticipants(ctx context.Context, createdBy pgtype.Int4) ([]ListUserProjectsWithParticipantsRow, error)
+	UpdateEmployee(ctx context.Context, arg UpdateEmployeeParams) (Employee, error)
 	UpdateEmployeeEmail(ctx context.Context, arg UpdateEmployeeEmailParams) (Employee, error)
 	UpdateEmployeeName(ctx context.Context, arg UpdateEmployeeNameParams) (Employee, error)
 	UpdateEmployeeRole(ctx context.Context, arg UpdateEmployeeRoleParams) (Employee, error)

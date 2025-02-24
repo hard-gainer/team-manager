@@ -17,7 +17,8 @@ message RegisterRequest {
    string name = 1;
    string email = 2;
    string password = 3;
-   bool is_admin = 4;
+   string role = 4;
+   bool is_admin = 5;
 }
 
 message RegisterResponse {
@@ -67,4 +68,5 @@ message GetUserResponse {
     int32 id = 1;
     string name = 2;
     string email = 3;
+    string role = 4;
 }

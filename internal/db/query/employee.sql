@@ -9,6 +9,14 @@ INSERT INTO employees (
 )
 RETURNING *;
 
+-- name: UpdateEmployee :one
+UPDATE employees
+SET name = $2,
+    email = $3,
+    role = $4
+WHERE id = $1
+RETURNING *;
+
 -- name: UpdateEmployeeName :one
 UPDATE employees
 SET name = $2

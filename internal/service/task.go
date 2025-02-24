@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	db "github.com/hard-gainer/task-tracker/internal/db/sqlc"
-	"github.com/hard-gainer/task-tracker/internal/util"
+	db "github.com/hard-gainer/team-manager/internal/db/sqlc"
+	"github.com/hard-gainer/team-manager/internal/util"
 )
 
 type CreateTaskRequest struct {

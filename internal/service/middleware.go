@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hard-gainer/task-tracker/internal/auth"
+	"github.com/hard-gainer/team-manager/internal/auth"
 )
 
 func (server *Server) authMiddleware() gin.HandlerFunc {

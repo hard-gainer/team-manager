@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hard-gainer/task-tracker/internal/util"
+	"github.com/hard-gainer/team-manager/internal/util"
 )
 
 func (server *Server) showStatistics(ctx *gin.Context) {

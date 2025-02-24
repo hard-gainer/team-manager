@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	auth "github.com/hard-gainer/task-tracker/internal/auth"
-	db "github.com/hard-gainer/task-tracker/internal/db/sqlc"
+	auth "github.com/hard-gainer/team-manager/internal/auth"
+	db "github.com/hard-gainer/team-manager/internal/db/sqlc"
 )
 
 func (server *Server) syncUser(ctx context.Context, userID int32) error {
@@ -24,13 +24,15 @@ func (server *Server) syncUser(ctx context.Context, userID int32) error {
 		ID:    userResp.Id,
 		Name:  userResp.Name,
 		Email: userResp.Email,
-		Role:  "NOT SET",
+		Role:  userResp.Role,
 	})
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key") {
-			_, err = server.store.UpdateEmployeeName(ctx, db.UpdateEmployeeNameParams{
-				ID:   userResp.Id,
-				Name: userResp.Name,
+			_, err = server.store.UpdateEmployee(ctx, db.UpdateEmployeeParams{
+				ID:    userResp.Id,
+				Name:  userResp.Name,
+				Email: userResp.Email,
+				Role:  userResp.Role,
 			})
 			if err != nil {
 				return fmt.Errorf("failed to update employee: %v", err)
@@ -47,6 +49,7 @@ func (server *Server) handleRegister(ctx *gin.Context) {
 	email := ctx.PostForm("email")
 	password := ctx.PostForm("password")
 	name := ctx.PostForm("name")
+	isManager := ctx.PostForm("is_manager") == "on"
 
 	if email == "" || password == "" || name == "" {
 		ctx.HTML(http.StatusBadRequest, "register.html", gin.H{
@@ -55,10 +58,18 @@ func (server *Server) handleRegister(ctx *gin.Context) {
 		return
 	}
 
+	fmt.Println("isManager", isManager)
+
+	role := "employee"
+	if isManager {
+		role = "manager"
+	}
+
 	authReq := &auth.RegisterRequest{
 		Name:     name,
 		Email:    email,
 		Password: password,
+		Role:     role,
 		IsAdmin:  false,
 	}
 

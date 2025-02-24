@@ -1,4 +1,4 @@
-module github.com/hard-gainer/task-tracker
+module github.com/hard-gainer/team-manager
 
 go 1.23.3
 

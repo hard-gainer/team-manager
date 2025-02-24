@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 
-	"github.com/hard-gainer/task-tracker/internal/auth"
-	db "github.com/hard-gainer/task-tracker/internal/db/sqlc"
-	"github.com/hard-gainer/task-tracker/internal/service"
+	"github.com/hard-gainer/team-manager/internal/auth"
+	db "github.com/hard-gainer/team-manager/internal/db/sqlc"
+	"github.com/hard-gainer/team-manager/internal/service"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"

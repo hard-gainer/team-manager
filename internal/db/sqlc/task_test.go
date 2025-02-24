@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hard-gainer/task-tracker/internal/util"
+	"github.com/hard-gainer/team-manager/internal/util"
 	"github.com/stretchr/testify/require"
 )
 
