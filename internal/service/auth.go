@@ -26,6 +26,9 @@ func (server *Server) syncUser(ctx context.Context, userID int32) error {
 		Email: userResp.Email,
 		Role:  userResp.Role,
 	})
+
+	fmt.Printf("User response: %+v\n", userResp)
+
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key") {
 			_, err = server.store.UpdateEmployee(ctx, db.UpdateEmployeeParams{
