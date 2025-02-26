@@ -21,6 +21,8 @@ type Querier interface {
 	DeleteTask(ctx context.Context, id int64) error
 	GetEmployee(ctx context.Context, id int32) (Employee, error)
 	GetProject(ctx context.Context, id int64) (Project, error)
+	GetProjectStats(ctx context.Context, projectID pgtype.Int4) (GetProjectStatsRow, error)
+	GetProjectWithStats(ctx context.Context) ([]GetProjectWithStatsRow, error)
 	GetTask(ctx context.Context, id int64) (Task, error)
 	ListEmployeeHistory(ctx context.Context, changedBy pgtype.Int4) ([]History, error)
 	ListEmployeeTasks(ctx context.Context, assignedTo pgtype.Int4) ([]Task, error)

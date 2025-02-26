@@ -7,13 +7,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	db "github.com/hard-gainer/team-manager/internal/db/sqlc"
+	"github.com/hard-gainer/team-manager/internal/db/types"
 	"github.com/hard-gainer/team-manager/internal/util"
 )
 
 func (server *Server) showProjects(ctx *gin.Context) {
 	userID := getUserIDFromToken(ctx)
 
-	projects, err := server.store.ListProjects(ctx)
+	projectsWithStats, err := server.store.GetProjectWithStats(ctx)
 	if err != nil {
 		log.Printf("Error loading projects: %v", err)
 		ctx.HTML(http.StatusInternalServerError, "error.html", gin.H{
@@ -22,21 +23,42 @@ func (server *Server) showProjects(ctx *gin.Context) {
 		return
 	}
 
-	var userProjects []db.Project
-	for _, project := range projects {
-		if project.CreatedBy.Int32 == userID {
-			userProjects = append(userProjects, project)
+	var userProjects []types.ProjectWithStats
+	for _, p := range projectsWithStats {
+        stats, err := server.store.GetProjectStats(ctx, util.ToNullInt4(int32(p.ID)))
+        if err != nil {
+            log.Printf("Error getting stats for project %d: %v", p.ID, err)
+            continue
+        }
+
+		project := db.Project {
+			ID: p.ID,
+			Title: p.Title,
+			Description: p.Description,
+			StartDate: p.StartDate,
+			EndDate: p.EndDate,
+			CreatedBy: p.CreatedBy,
+		}
+
+		projectWithStats := types.ProjectWithStats{
+			Project: project,
+			TaskCount: stats.TaskCount,
+			TotalTimeSpent: util.ToNullInt8(stats.TotalTimeSpent),
+		}
+
+		if p.CreatedBy.Int32 == userID {
+			userProjects = append(userProjects, projectWithStats)
 			continue
 		}
 
-		participants, err := server.store.ListProjectParticipants(ctx, project.ID)
+		participants, err := server.store.ListProjectParticipants(ctx, p.ID)
 		if err != nil {
 			continue
 		}
 
 		for _, participant := range participants {
 			if participant.ID == userID {
-				userProjects = append(userProjects, project)
+				userProjects = append(userProjects, projectWithStats)
 				break
 			}
 		}
@@ -125,4 +147,30 @@ func (server *Server) removeProjectParticipant(ctx *gin.Context) {
 	}
 
 	ctx.Status(http.StatusNoContent)
+}
+
+func (server *Server) showCreateProjectForm(ctx *gin.Context) {
+	ctx.HTML(http.StatusOK, "create_project_modal.html", nil)
+}
+
+func (server *Server) createProject(ctx *gin.Context) {
+	userID := getUserIDFromToken(ctx)
+
+	arg := db.CreateProjectParams{
+		Title:       ctx.PostForm("title"),
+		Description: ctx.PostForm("description"),
+		StartDate:   util.ParseDate(ctx.PostForm("start_date")),
+		EndDate:     util.ParseDate(ctx.PostForm("end_date")),
+		CreatedBy:   util.ToNullInt4(userID),
+	}
+
+	project, err := server.store.CreateProject(ctx, arg)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.HTML(http.StatusOK, "project_card.html", gin.H{
+		"project": project,
+	})
 }

@@ -110,6 +110,77 @@ func (q *Queries) GetProject(ctx context.Context, id int64) (Project, error) {
 	return i, err
 }
 
+const getProjectStats = `-- name: GetProjectStats :one
+SELECT 
+    COUNT(DISTINCT t.id) as task_count,
+    COALESCE(SUM(t.time_spent), 0)::bigint as total_time_spent
+FROM tasks t
+WHERE t.project_id = $1
+`
+
+type GetProjectStatsRow struct {
+	TaskCount      int64 `json:"task_count"`
+	TotalTimeSpent int64 `json:"total_time_spent"`
+}
+
+func (q *Queries) GetProjectStats(ctx context.Context, projectID pgtype.Int4) (GetProjectStatsRow, error) {
+	row := q.db.QueryRow(ctx, getProjectStats, projectID)
+	var i GetProjectStatsRow
+	err := row.Scan(&i.TaskCount, &i.TotalTimeSpent)
+	return i, err
+}
+
+const getProjectWithStats = `-- name: GetProjectWithStats :many
+SELECT 
+    p.id, p.title, p.description, p.start_date, p.end_date, p.created_by,
+    COUNT(DISTINCT t.id) as task_count,
+    COALESCE(SUM(t.time_spent), 0)::bigint as total_time_spent
+FROM projects p
+LEFT JOIN tasks t ON p.id = t.project_id
+GROUP BY p.id
+ORDER BY p.start_date DESC
+`
+
+type GetProjectWithStatsRow struct {
+	ID             int64       `json:"id"`
+	Title          string      `json:"title"`
+	Description    string      `json:"description"`
+	StartDate      time.Time   `json:"start_date"`
+	EndDate        time.Time   `json:"end_date"`
+	CreatedBy      pgtype.Int4 `json:"created_by"`
+	TaskCount      int64       `json:"task_count"`
+	TotalTimeSpent int64       `json:"total_time_spent"`
+}
+
+func (q *Queries) GetProjectWithStats(ctx context.Context) ([]GetProjectWithStatsRow, error) {
+	rows, err := q.db.Query(ctx, getProjectWithStats)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetProjectWithStatsRow{}
+	for rows.Next() {
+		var i GetProjectWithStatsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Title,
+			&i.Description,
+			&i.StartDate,
+			&i.EndDate,
+			&i.CreatedBy,
+			&i.TaskCount,
+			&i.TotalTimeSpent,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listProjectParticipants = `-- name: ListProjectParticipants :many
 SELECT e.id, e.name, e.email, e.role
 FROM employees e

@@ -1,6 +1,18 @@
 package util
 
-import "github.com/jackc/pgx/v5/pgtype"
+import (
+	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
+)
+
+func ParseDate(dateStr string) time.Time {
+	date, err := time.Parse("2006-01-02", dateStr)
+	if err != nil {
+		return time.Now()
+	}
+	return date
+}
 
 func ToNullInt4(i int32) pgtype.Int4 {
 	return pgtype.Int4{

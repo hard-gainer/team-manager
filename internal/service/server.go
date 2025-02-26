@@ -32,6 +32,8 @@ func NewServer(store db.Store, authClient auth.AuthClient) *Server {
 		authorized.GET("/dashboard/:projectId", server.showProjectDashboard)
 		authorized.GET("/dashboard", server.showDashboard)
 		authorized.GET("/statistics", server.showStatistics)
+		authorized.GET("/projects/create", server.showCreateProjectForm)
+		authorized.POST("/projects", server.createProject)
 		registerTaskRoutes(server, authorized)
 	}
 

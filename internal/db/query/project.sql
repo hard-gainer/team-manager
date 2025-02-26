@@ -52,3 +52,20 @@ UPDATE project_participants
 SET role = $3
 WHERE project_id = $1 AND user_id = $2
 RETURNING *;
+
+-- name: GetProjectWithStats :many
+SELECT 
+    p.*,
+    COUNT(DISTINCT t.id) as task_count,
+    COALESCE(SUM(t.time_spent), 0)::bigint as total_time_spent
+FROM projects p
+LEFT JOIN tasks t ON p.id = t.project_id
+GROUP BY p.id
+ORDER BY p.start_date DESC;
+
+-- name: GetProjectStats :one
+SELECT 
+    COUNT(DISTINCT t.id) as task_count,
+    COALESCE(SUM(t.time_spent), 0)::bigint as total_time_spent
+FROM tasks t
+WHERE t.project_id = $1;
