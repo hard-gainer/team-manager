@@ -27,8 +27,6 @@ func (server *Server) syncUser(ctx context.Context, userID int32) error {
 		Role:  userResp.Role,
 	})
 
-	fmt.Printf("User response: %+v\n", userResp)
-
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key") {
 			_, err = server.store.UpdateEmployee(ctx, db.UpdateEmployeeParams{
@@ -60,8 +58,6 @@ func (server *Server) handleRegister(ctx *gin.Context) {
 		})
 		return
 	}
-
-	fmt.Println("isManager", isManager)
 
 	role := "employee"
 	if isManager {
@@ -130,7 +126,6 @@ func (server *Server) handleLogin(ctx *gin.Context) {
 		return
 	}
 
-	fmt.Printf("Login successful, redirecting with token: %s\n", resp.Token)
 	ctx.Redirect(http.StatusSeeOther, "/projects")
 }
 
