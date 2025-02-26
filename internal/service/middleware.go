@@ -36,8 +36,6 @@ func (server *Server) authMiddleware() gin.HandlerFunc {
 		}
 
 		ctx.Set("user_id", resp.UserId)
-		fmt.Printf("User authenticated with ID: %d\n", resp.UserId)
-
 		ctx.Next()
 	}
 }

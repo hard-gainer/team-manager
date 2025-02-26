@@ -12,6 +12,34 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addProjectParticipant = `-- name: AddProjectParticipant :one
+INSERT INTO project_participants (
+    project_id,
+    user_id,
+    role
+) VALUES (
+    $1, $2, $3
+) RETURNING project_id, user_id, role, joined_at
+`
+
+type AddProjectParticipantParams struct {
+	ProjectID int64  `json:"project_id"`
+	UserID    int64  `json:"user_id"`
+	Role      string `json:"role"`
+}
+
+func (q *Queries) AddProjectParticipant(ctx context.Context, arg AddProjectParticipantParams) (ProjectParticipant, error) {
+	row := q.db.QueryRow(ctx, addProjectParticipant, arg.ProjectID, arg.UserID, arg.Role)
+	var i ProjectParticipant
+	err := row.Scan(
+		&i.ProjectID,
+		&i.UserID,
+		&i.Role,
+		&i.JoinedAt,
+	)
+	return i, err
+}
+
 const createProject = `-- name: CreateProject :one
 INSERT INTO projects (
     title,
@@ -82,58 +110,36 @@ func (q *Queries) GetProject(ctx context.Context, id int64) (Project, error) {
 	return i, err
 }
 
-const getProjectWithParticipants = `-- name: GetProjectWithParticipants :one
-SELECT 
-    p.id, p.title, p.description, p.start_date, p.end_date, p.created_by,
-    COUNT(DISTINCT t.id) as task_count,
-    COALESCE(SUM(t.time_spent), 0) as total_time_spent,
-    COALESCE(
-        json_agg(
-            json_build_object(
-                'id', e.id,
-                'first_name', e.first_name,
-                'last_name', e.last_name,
-                'email', e.email,
-                'role', pp.role
-            )
-        ) FILTER (WHERE e.id IS NOT NULL),
-        '[]'
-    ) as participants
-FROM projects p
-LEFT JOIN project_participants pp ON p.id = pp.project_id
-LEFT JOIN employees e ON pp.user_id = e.id
-LEFT JOIN tasks t ON p.id = t.project_id
-WHERE p.id = $1
-GROUP BY p.id
+const listProjectParticipants = `-- name: ListProjectParticipants :many
+SELECT e.id, e.name, e.email, e.role
+FROM employees e
+JOIN project_participants pp ON e.id = pp.user_id
+WHERE pp.project_id = $1
 `
 
-type GetProjectWithParticipantsRow struct {
-	ID             int64       `json:"id"`
-	Title          string      `json:"title"`
-	Description    string      `json:"description"`
-	StartDate      time.Time   `json:"start_date"`
-	EndDate        time.Time   `json:"end_date"`
-	CreatedBy      pgtype.Int4 `json:"created_by"`
-	TaskCount      int64       `json:"task_count"`
-	TotalTimeSpent interface{} `json:"total_time_spent"`
-	Participants   interface{} `json:"participants"`
-}
-
-func (q *Queries) GetProjectWithParticipants(ctx context.Context, id int64) (GetProjectWithParticipantsRow, error) {
-	row := q.db.QueryRow(ctx, getProjectWithParticipants, id)
-	var i GetProjectWithParticipantsRow
-	err := row.Scan(
-		&i.ID,
-		&i.Title,
-		&i.Description,
-		&i.StartDate,
-		&i.EndDate,
-		&i.CreatedBy,
-		&i.TaskCount,
-		&i.TotalTimeSpent,
-		&i.Participants,
-	)
-	return i, err
+func (q *Queries) ListProjectParticipants(ctx context.Context, projectID int64) ([]Employee, error) {
+	rows, err := q.db.Query(ctx, listProjectParticipants, projectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Employee{}
+	for rows.Next() {
+		var i Employee
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Email,
+			&i.Role,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listProjects = `-- name: ListProjects :many
@@ -167,75 +173,44 @@ func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
 	return items, nil
 }
 
-const listUserProjectsWithParticipants = `-- name: ListUserProjectsWithParticipants :many
-SELECT 
-    p.id, p.title, p.description, p.start_date, p.end_date, p.created_by,
-    COUNT(DISTINCT t.id) as task_count,
-    COALESCE(SUM(t.time_spent), 0) as total_time_spent,
-    COALESCE(
-        json_agg(
-            json_build_object(
-                'id', e.id,
-                'name', e.name,
-                'email', e.email,
-                'role', pp.role
-            )
-        ) FILTER (WHERE e.id IS NOT NULL),
-        '[]'
-    ) as participants
-FROM projects p
-LEFT JOIN project_participants pp ON p.id = pp.project_id
-LEFT JOIN employees e ON pp.user_id = e.id
-LEFT JOIN tasks t ON p.id = t.project_id
-WHERE p.created_by = $1 
-    OR EXISTS (
-        SELECT 1 FROM project_participants 
-        WHERE project_id = p.id AND user_id = $1
-    )
-GROUP BY p.id
-ORDER BY p.start_date DESC
+const removeProjectParticipant = `-- name: RemoveProjectParticipant :exec
+DELETE FROM project_participants
+WHERE project_id = $1 AND user_id = $2
 `
 
-type ListUserProjectsWithParticipantsRow struct {
-	ID             int64       `json:"id"`
-	Title          string      `json:"title"`
-	Description    string      `json:"description"`
-	StartDate      time.Time   `json:"start_date"`
-	EndDate        time.Time   `json:"end_date"`
-	CreatedBy      pgtype.Int4 `json:"created_by"`
-	TaskCount      int64       `json:"task_count"`
-	TotalTimeSpent interface{} `json:"total_time_spent"`
-	Participants   interface{} `json:"participants"`
+type RemoveProjectParticipantParams struct {
+	ProjectID int64 `json:"project_id"`
+	UserID    int64 `json:"user_id"`
 }
 
-func (q *Queries) ListUserProjectsWithParticipants(ctx context.Context, createdBy pgtype.Int4) ([]ListUserProjectsWithParticipantsRow, error) {
-	rows, err := q.db.Query(ctx, listUserProjectsWithParticipants, createdBy)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListUserProjectsWithParticipantsRow{}
-	for rows.Next() {
-		var i ListUserProjectsWithParticipantsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Title,
-			&i.Description,
-			&i.StartDate,
-			&i.EndDate,
-			&i.CreatedBy,
-			&i.TaskCount,
-			&i.TotalTimeSpent,
-			&i.Participants,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) RemoveProjectParticipant(ctx context.Context, arg RemoveProjectParticipantParams) error {
+	_, err := q.db.Exec(ctx, removeProjectParticipant, arg.ProjectID, arg.UserID)
+	return err
+}
+
+const updateParticipantRole = `-- name: UpdateParticipantRole :one
+UPDATE project_participants
+SET role = $3
+WHERE project_id = $1 AND user_id = $2
+RETURNING project_id, user_id, role, joined_at
+`
+
+type UpdateParticipantRoleParams struct {
+	ProjectID int64  `json:"project_id"`
+	UserID    int64  `json:"user_id"`
+	Role      string `json:"role"`
+}
+
+func (q *Queries) UpdateParticipantRole(ctx context.Context, arg UpdateParticipantRoleParams) (ProjectParticipant, error) {
+	row := q.db.QueryRow(ctx, updateParticipantRole, arg.ProjectID, arg.UserID, arg.Role)
+	var i ProjectParticipant
+	err := row.Scan(
+		&i.ProjectID,
+		&i.UserID,
+		&i.Role,
+		&i.JoinedAt,
+	)
+	return i, err
 }
 
 const updateProject = `-- name: UpdateProject :one

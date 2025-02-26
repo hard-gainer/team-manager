@@ -60,15 +60,6 @@
                             {{ formatDuration .TimeSpent }} hours
                         </span>
                     </div>
-                    {{ if .Participants }}
-                    <div class="mt-4 flex -space-x-2">
-                        {{ range .Participants }}
-                        <div class="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center" title="{{ .name }}">
-                            <span class="text-xs font-medium">{{ slice .name 0 2 }}</span>
-                        </div>
-                        {{ end }}
-                    </div>
-                    {{ end }}
                 </div>
             </a>
             {{ end }}
