@@ -17,7 +17,9 @@
         <form hx-post="/tasks" 
               hx-target="#tasks" 
               hx-swap="afterbegin"
-              hx-on::after-settle="document.querySelector('#createTaskModal').remove()">
+              hx-on="
+                htmx:afterRequest:
+                    htmx.remove('#createTaskModal')">
             <!-- Hidden project ID field -->
             <input type="hidden" name="project_id" value="{{ .projectID }}">
             <div class="space-y-4">

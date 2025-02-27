@@ -17,7 +17,9 @@
         <form hx-post="/projects" 
               hx-target="#projects" 
               hx-swap="afterbegin"
-              hx-on::after="htmx.remove('#createProjectModal')">
+              hx-on="
+                htmx:afterRequest:
+                    htmx.remove('#createProjectModal')">
             <div class="space-y-4">
                 <!-- Title -->
                 <div>
