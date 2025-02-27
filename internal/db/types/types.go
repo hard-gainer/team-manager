@@ -6,7 +6,7 @@ import (
 )
 
 type ProjectWithStats struct {
-	db.Project
-	TaskCount int64       `json:"task_count"`
+	*db.Project
+	TaskCount      int64       `json:"task_count"`
 	TotalTimeSpent pgtype.Int8 `json:"time_spent"`
 }

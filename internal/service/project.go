@@ -41,15 +41,15 @@ func (server *Server) showProjects(ctx *gin.Context) {
 		}
 
 		projectWithStats := types.ProjectWithStats{
-			Project: project,
+			Project: &project,
 			TaskCount: stats.TaskCount,
 			TotalTimeSpent: util.ToNullInt8(stats.TotalTimeSpent),
 		}
 
-		if p.CreatedBy.Int32 == userID {
-			userProjects = append(userProjects, projectWithStats)
-			continue
-		}
+		// if p.CreatedBy.Int32 == userID {
+		// 	userProjects = append(userProjects, projectWithStats)
+		// 	continue
+		// }
 
 		participants, err := server.store.ListProjectParticipants(ctx, p.ID)
 		if err != nil {
@@ -63,6 +63,8 @@ func (server *Server) showProjects(ctx *gin.Context) {
 			}
 		}
 	}
+
+    log.Printf("Found %d projects for user %d", len(userProjects), userID)
 
 	ctx.HTML(http.StatusOK, "projects.html", gin.H{
 		"projects": userProjects,
@@ -165,6 +167,24 @@ func (server *Server) createProject(ctx *gin.Context) {
 	}
 
 	project, err := server.store.CreateProject(ctx, arg)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := server.store.GetEmployee(ctx, userID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	arg1 := db.AddProjectParticipantParams{
+		ProjectID: project.ID,
+		UserID: int64(user.ID),
+		Role:  user.Role,
+	}
+
+	_, err = server.store.AddProjectParticipant(ctx, arg1)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

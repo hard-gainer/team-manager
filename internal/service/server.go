@@ -54,7 +54,6 @@ func registerTaskRoutes(server *Server, router *gin.RouterGroup) {
 	router.GET("/tasks", server.listTasks)
 	router.GET("/projects/:id/tasks", server.listProjectTasks)
 	router.GET("/employees/:id/tasks", server.listEmployeeTasks)
-	router.POST("/tasks", server.createTask)
 	router.PATCH("/tasks/:id/title", server.updateTaskTitle)
 	router.PATCH("/tasks/:id/description", server.updateTaskDescription)
 	router.PATCH("/tasks/:id/deadline", server.updateTaskDeadline)
@@ -64,8 +63,8 @@ func registerTaskRoutes(server *Server, router *gin.RouterGroup) {
 
 	router.GET("/tasks/:id/confirm", server.showTaskConfirm)
 	router.GET("/tasks/:id/details", server.showTaskDetails)
-	// router.GET("/tasks/create", server.showCreateTaskForm)
-	// router.POST("/tasks", server.createTask)
+	router.GET("/tasks/create", server.showCreateTaskForm)
+	router.POST("/tasks", server.createTask)
 }
 
 func (server *Server) Start(address string) error {

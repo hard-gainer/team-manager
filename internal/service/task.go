@@ -11,40 +11,44 @@ import (
 	"github.com/hard-gainer/team-manager/internal/util"
 )
 
-type CreateTaskRequest struct {
-	Title       string    `json:"title" binding:"required"`
-	Description string    `json:"description" binding:"required"`
-	DueTo       time.Time `json:"due_to" binding:"required"`
-	Status      string    `json:"status" binding:"required,oneof=ASSIGNED STARTED SUSPENDED COMPLETED"`
-	Priority    string    `json:"priority" binding:"required,oneof=LOW MEDIUM HIGH CRITICAL"`
-	ProjectID   int32     `json:"project_id" binding:"required"`
-	AssignedTo  int32     `json:"assigned_to" binding:"required"`
-}
-
 func (server *Server) createTask(ctx *gin.Context) {
-	var req CreateTaskRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+	userID := getUserIDFromToken(ctx)
+
+	projectID, err := strconv.ParseInt(ctx.PostForm("project_id"), 10, 32)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID"})
 		return
 	}
 
 	arg := db.CreateTaskParams{
-		Title:       req.Title,
-		Description: req.Description,
-		DueTo:       req.DueTo,
-		Status:      req.Status,
-		Priority:    req.Priority,
-		ProjectID:   util.ToNullInt4(req.ProjectID),
-		AssignedTo:  util.ToNullInt4(req.AssignedTo),
+		Title:       ctx.PostForm("title"),
+		Description: ctx.PostForm("description"),
+		DueTo:       util.ParseDate(ctx.PostForm("due_to")),
+		Status:      "ASSIGNED",
+		Priority:    ctx.PostForm("priority"),
+		ProjectID:   util.ToNullInt4(int32(projectID)),
+		AssignedTo:  util.ToNullInt4(userID),
 	}
 
 	task, err := server.store.CreateTask(ctx, arg)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, task)
+	ctx.HTML(http.StatusOK, "task_partial.html", task)
+}
+
+func (server *Server) showCreateTaskForm(ctx *gin.Context) {
+	projectID := ctx.Query("project_id")
+	if projectID == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Project ID is required"})
+		return
+	}
+
+	ctx.HTML(http.StatusOK, "create_task_modal.html", gin.H{
+		"projectID": projectID,
+	})
 }
 
 func (server *Server) getTask(ctx *gin.Context) {
@@ -69,25 +73,25 @@ func (server *Server) getTask(ctx *gin.Context) {
 }
 
 func (server *Server) getTaskTime(ctx *gin.Context) {
-    id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, errorResponse(err))
-        return
-    }
+	id, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
 
-    task, err := server.store.GetTask(ctx, id)
-    if err != nil {
-        if err == sql.ErrNoRows {
-            ctx.JSON(http.StatusNotFound, errorResponse(err))
-            return
-        }
-        ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-        return
-    }
+	task, err := server.store.GetTask(ctx, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			ctx.JSON(http.StatusNotFound, errorResponse(err))
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
 
-    ctx.JSON(http.StatusOK, gin.H{
-        "timeSpent": task.TimeSpent.Int64,
-    })
+	ctx.JSON(http.StatusOK, gin.H{
+		"timeSpent": task.TimeSpent.Int64,
+	})
 }
 
 func (server *Server) listTasks(ctx *gin.Context) {
@@ -233,48 +237,48 @@ func (server *Server) updateTaskDeadline(ctx *gin.Context) {
 }
 
 func (server *Server) updateTaskTimeSpent(ctx *gin.Context) {
-    idParam := ctx.Param("id")
-    id, err := strconv.ParseInt(idParam, 10, 64)
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, errorResponse(err))
-        return
-    }
+	idParam := ctx.Param("id")
+	id, err := strconv.ParseInt(idParam, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
 
-    timeParam := ctx.PostForm("time")
-    if timeParam == "" {
-        timeParam = ctx.Query("time")
-    }
+	timeParam := ctx.PostForm("time")
+	if timeParam == "" {
+		timeParam = ctx.Query("time")
+	}
 
-    if timeParam == "" {
-        ctx.JSON(http.StatusBadRequest, gin.H{"error": "time is required"})
-        return
-    }
+	if timeParam == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "time is required"})
+		return
+	}
 
-    timeSpent, err := strconv.ParseInt(timeParam, 10, 64)
-    if err != nil {
-        ctx.JSON(http.StatusBadRequest, errorResponse(err))
-        return
-    }
+	timeSpent, err := strconv.ParseInt(timeParam, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
 
-    if timeSpent < 0 {
-        ctx.JSON(http.StatusBadRequest, gin.H{"error": "time must be a positive number"})
-        return
-    }
+	if timeSpent < 0 {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "time must be a positive number"})
+		return
+	}
 
-    arg := db.UpdateTaskTimeSpentParams{
-        ID:        id,
-        TimeSpent: util.ToNullInt8(timeSpent),
-    }
+	arg := db.UpdateTaskTimeSpentParams{
+		ID:        id,
+		TimeSpent: util.ToNullInt8(timeSpent),
+	}
 
-    task, err := server.store.UpdateTaskTimeSpent(ctx, arg)
-    if err != nil {
-        ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-        return
-    }
+	task, err := server.store.UpdateTaskTimeSpent(ctx, arg)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
 
-    ctx.JSON(http.StatusOK, gin.H{
+	ctx.JSON(http.StatusOK, gin.H{
 		"timeSpent": task.TimeSpent,
-        "status":    "success",
+		"status":    "success",
 	})
 }
 

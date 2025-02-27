@@ -7,7 +7,7 @@
             <h3 class="text-lg font-medium text-gray-900">Create New Task</h3>
             <button 
                 class="text-gray-400 hover:text-gray-500"
-                onclick="htmx.remove('#createTaskModal')">
+                onclick="this.closest('#createTaskModal').remove()">
                 <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -17,11 +17,13 @@
         <form hx-post="/tasks" 
               hx-target="#tasks" 
               hx-swap="afterbegin"
-              hx-on::after="htmx.remove('#createTaskModal')">
+              hx-on::after-settle="document.querySelector('#createTaskModal').remove()">
+            <!-- Hidden project ID field -->
+            <input type="hidden" name="project_id" value="{{ .projectID }}">
             <div class="space-y-4">
                 <!-- Title -->
                 <div>
-                    <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+                    <label for="title" class="block text-sm font-medium text-gray-700">Task Title</label>
                     <input type="text" 
                            id="title" 
                            name="title" 
@@ -35,23 +37,39 @@
                     <textarea id="description" 
                             name="description" 
                             rows="3" 
+                            required
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                 </div>
 
-                <!-- Deadline -->
+                <!-- Due Date -->
                 <div>
-                    <label for="deadline" class="block text-sm font-medium text-gray-700">Deadline</label>
+                    <label for="due_to" class="block text-sm font-medium text-gray-700">Due Date</label>
                     <input type="datetime-local" 
-                           id="deadline" 
-                           name="deadline" 
+                           id="due_to" 
+                           name="due_to" 
+                           required
                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+
+                <!-- Priority -->
+                <div>
+                    <label for="priority" class="block text-sm font-medium text-gray-700">Priority</label>
+                    <select id="priority" 
+                            name="priority" 
+                            required
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="LOW">Low</option>
+                        <option value="MEDIUM">Medium</option>
+                        <option value="HIGH">High</option>
+                        <option value="CRITICAL">Critical</option>
+                    </select>
                 </div>
 
                 <!-- Buttons -->
                 <div class="flex justify-end space-x-3 mt-6">
                     <button type="button" 
                             class="px-4 py-2 border text-gray-700 rounded-md hover:bg-gray-50"
-                            onclick="htmx.remove('#createTaskModal')">
+                            onclick="this.closest('#createTaskModal').remove()">
                         Cancel
                     </button>
                     <button type="submit" 
