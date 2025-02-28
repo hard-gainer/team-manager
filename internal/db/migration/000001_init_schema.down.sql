@@ -2,3 +2,4 @@ DROP TABLE IF EXISTS histories;
 DROP TABLE IF EXISTS tasks;
 DROP TABLE IF EXISTS projects;
 DROP TABLE IF EXISTS employees;
+DROP TABLE IF EXISTS project_invitations;

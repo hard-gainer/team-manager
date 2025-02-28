@@ -11,16 +11,19 @@ import (
 )
 
 type Querier interface {
+	AcceptProjectInvitation(ctx context.Context, token string) (ProjectInvitation, error)
 	AddProjectParticipant(ctx context.Context, arg AddProjectParticipantParams) (ProjectParticipant, error)
 	CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (Employee, error)
 	CreateHistory(ctx context.Context, arg CreateHistoryParams) (History, error)
 	CreateProject(ctx context.Context, arg CreateProjectParams) (Project, error)
+	CreateProjectInvitation(ctx context.Context, arg CreateProjectInvitationParams) (ProjectInvitation, error)
 	CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
 	DeleteEmployee(ctx context.Context, id int32) error
 	DeleteProject(ctx context.Context, id int64) error
 	DeleteTask(ctx context.Context, id int64) error
 	GetEmployee(ctx context.Context, id int32) (Employee, error)
 	GetProject(ctx context.Context, id int64) (Project, error)
+	GetProjectInvitation(ctx context.Context, token string) (ProjectInvitation, error)
 	GetProjectStats(ctx context.Context, projectID pgtype.Int4) (GetProjectStatsRow, error)
 	GetProjectWithStats(ctx context.Context) ([]GetProjectWithStatsRow, error)
 	GetTask(ctx context.Context, id int64) (Task, error)

@@ -35,6 +35,17 @@ type Project struct {
 	CreatedBy   pgtype.Int4 `json:"created_by"`
 }
 
+type ProjectInvitation struct {
+	ID         int64            `json:"id"`
+	ProjectID  int64            `json:"project_id"`
+	Email      string           `json:"email"`
+	Token      string           `json:"token"`
+	Role       string           `json:"role"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+	ExpiresAt  pgtype.Timestamp `json:"expires_at"`
+	AcceptedAt pgtype.Timestamp `json:"accepted_at"`
+}
+
 type ProjectParticipant struct {
 	ProjectID int64            `json:"project_id"`
 	UserID    int64            `json:"user_id"`

@@ -3,7 +3,9 @@ package service
 import (
 	"github.com/gin-gonic/gin"
 	auth "github.com/hard-gainer/team-manager/internal/auth"
+	"github.com/hard-gainer/team-manager/internal/config"
 	db "github.com/hard-gainer/team-manager/internal/db/sqlc"
+	"github.com/hard-gainer/team-manager/internal/mail"
 	tmpl "github.com/hard-gainer/team-manager/internal/template"
 )
 
@@ -11,12 +13,21 @@ type Server struct {
 	router     *gin.Engine
 	store      db.Store
 	authClient auth.AuthClient
+	config     *config.Config
+	mailer     *mail.Mailer
 }
 
-func NewServer(store db.Store, authClient auth.AuthClient) *Server {
+func NewServer(
+	cfg *config.Config,
+	store db.Store,
+	authClient auth.AuthClient,
+	mailer *mail.Mailer,
+) *Server {
 	server := &Server{
 		store:      store,
 		authClient: authClient,
+		config:     cfg,
+		mailer:     mailer,
 	}
 	router := gin.Default()
 
@@ -35,6 +46,9 @@ func NewServer(store db.Store, authClient auth.AuthClient) *Server {
 		authorized.GET("/projects/create", server.showCreateProjectForm)
 		authorized.POST("/projects", server.createProject)
 		registerTaskRoutes(server, authorized)
+		authorized.GET("/projects/:id/invite", server.showInviteMemberForm)
+		authorized.POST("/projects/:id/invite", server.inviteMember)
+		authorized.GET("/projects/join/:token", server.handleProjectInvitation)
 	}
 
 	// Auth routes

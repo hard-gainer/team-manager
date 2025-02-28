@@ -36,6 +36,18 @@ CREATE TABLE "histories" (
     new_status VARCHAR(50) NOT NULL
 );
 
+CREATE TABLE project_invitations (
+    id BIGSERIAL PRIMARY KEY,
+    project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    email VARCHAR(255) NOT NULL,
+    token VARCHAR(64) NOT NULL UNIQUE,
+    role VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    accepted_at TIMESTAMP,
+    UNIQUE (project_id, email)
+);
+
 
 CREATE INDEX idx_tasks_project_id ON tasks(project_id);
 CREATE INDEX idx_tasks_status ON tasks(status);
@@ -46,3 +58,6 @@ CREATE INDEX idx_employees_email ON employees(email);
 CREATE INDEX idx_history_task_id ON histories(task_id);
 
 CREATE INDEX idx_project_created_by ON projects(created_by);
+
+CREATE INDEX idx_project_invitations_token ON project_invitations(token);
+CREATE INDEX idx_project_invitations_email ON project_invitations(email);

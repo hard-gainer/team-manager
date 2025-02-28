@@ -1,0 +1,13 @@
+base_url: http://localhost:8080
+
+db:
+  db_url: "postgresql://root:secret@localhost:5432/task_tracker?sslmode=disable"
+
+grpc:
+  auth_addr: "localhost:44044"
+
+mailer:
+  from: "your-email@example.com"
+  password: "your-password"
+  host: "smtp.gmail.com"
+  port: 587

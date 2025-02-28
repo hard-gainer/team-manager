@@ -6,6 +6,13 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+func ToTimestamp(t time.Time) pgtype.Timestamp {
+	return pgtype.Timestamp{
+		Time:  t,
+		Valid: true,
+	}
+}
+
 func ParseDate(dateStr string) time.Time {
 	date, err := time.Parse("2006-01-02", dateStr)
 	if err != nil {
