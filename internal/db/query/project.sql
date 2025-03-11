@@ -42,10 +42,11 @@ DELETE FROM project_participants
 WHERE project_id = $1 AND user_id = $2;
 
 -- name: ListProjectParticipants :many
-SELECT e.*
-FROM employees e
-JOIN project_participants pp ON e.id = pp.user_id
-WHERE pp.project_id = $1;
+SELECT e.id, e.name, e.email, pp.role 
+FROM project_participants pp
+JOIN employees e ON pp.user_id = e.id
+WHERE pp.project_id = $1
+ORDER BY e.name;
 
 -- name: UpdateParticipantRole :one
 UPDATE project_participants

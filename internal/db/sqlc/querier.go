@@ -31,7 +31,7 @@ type Querier interface {
 	ListEmployeeHistory(ctx context.Context, changedBy pgtype.Int4) ([]History, error)
 	ListEmployeeTasks(ctx context.Context, assignedTo pgtype.Int4) ([]Task, error)
 	ListEmployees(ctx context.Context) ([]Employee, error)
-	ListProjectParticipants(ctx context.Context, projectID int64) ([]Employee, error)
+	ListProjectParticipants(ctx context.Context, projectID int64) ([]ListProjectParticipantsRow, error)
 	ListProjectTasks(ctx context.Context, projectID pgtype.Int4) ([]Task, error)
 	ListProjects(ctx context.Context) ([]Project, error)
 	ListTaskHistory(ctx context.Context, taskID pgtype.Int4) ([]History, error)

@@ -20,6 +20,19 @@ func (server *Server) createTask(ctx *gin.Context) {
 		return
 	}
 
+	var assignedTo int32
+	assigneeID := ctx.PostForm("assignee_id")
+	if assigneeID != "" {
+		assigneeIDInt, err := strconv.ParseInt(assigneeID, 10, 32)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid assignee ID"})
+			return
+		}
+		assignedTo = int32(assigneeIDInt)
+	} else {
+		assignedTo = userID
+	}
+
 	arg := db.CreateTaskParams{
 		Title:       ctx.PostForm("title"),
 		Description: ctx.PostForm("description"),
@@ -27,7 +40,7 @@ func (server *Server) createTask(ctx *gin.Context) {
 		Status:      "ASSIGNED",
 		Priority:    ctx.PostForm("priority"),
 		ProjectID:   util.ToNullInt4(int32(projectID)),
-		AssignedTo:  util.ToNullInt4(userID),
+		AssignedTo:  util.ToNullInt4(assignedTo),
 	}
 
 	task, err := server.store.CreateTask(ctx, arg)
@@ -40,14 +53,40 @@ func (server *Server) createTask(ctx *gin.Context) {
 }
 
 func (server *Server) showCreateTaskForm(ctx *gin.Context) {
-	projectID := ctx.Query("project_id")
-	if projectID == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Project ID is required"})
+	projectID, err := strconv.ParseInt(ctx.Query("project_id"), 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID"})
 		return
+	}
+
+	participants, err := server.store.ListProjectParticipants(ctx, projectID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load project participants"})
+		return
+	}
+
+	var projectMembers []struct {
+		ID   int32  `json:"id"`
+		Name string `json:"name"`
+	}
+
+	for _, participant := range participants {
+		employee, err := server.store.GetEmployee(ctx, participant.ID)
+		if err != nil {
+			continue
+		}
+		projectMembers = append(projectMembers, struct {
+			ID   int32  `json:"id"`
+			Name string `json:"name"`
+		}{
+			ID:   employee.ID,
+			Name: employee.Name,
+		})
 	}
 
 	ctx.HTML(http.StatusOK, "create_task_modal.html", gin.H{
 		"projectID": projectID,
+		"members":   projectMembers,
 	})
 }
 

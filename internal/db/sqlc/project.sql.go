@@ -199,21 +199,29 @@ func (q *Queries) GetProjectWithStats(ctx context.Context) ([]GetProjectWithStat
 }
 
 const listProjectParticipants = `-- name: ListProjectParticipants :many
-SELECT e.id, e.name, e.email, e.role
-FROM employees e
-JOIN project_participants pp ON e.id = pp.user_id
+SELECT e.id, e.name, e.email, pp.role 
+FROM project_participants pp
+JOIN employees e ON pp.user_id = e.id
 WHERE pp.project_id = $1
+ORDER BY e.name
 `
 
-func (q *Queries) ListProjectParticipants(ctx context.Context, projectID int64) ([]Employee, error) {
+type ListProjectParticipantsRow struct {
+	ID    int32  `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Role  string `json:"role"`
+}
+
+func (q *Queries) ListProjectParticipants(ctx context.Context, projectID int64) ([]ListProjectParticipantsRow, error) {
 	rows, err := q.db.Query(ctx, listProjectParticipants, projectID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Employee{}
+	items := []ListProjectParticipantsRow{}
 	for rows.Next() {
-		var i Employee
+		var i ListProjectParticipantsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
