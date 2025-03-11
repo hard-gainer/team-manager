@@ -1,6 +1,8 @@
 package service
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	auth "github.com/hard-gainer/team-manager/internal/auth"
 	"github.com/hard-gainer/team-manager/internal/config"
@@ -35,22 +37,6 @@ func NewServer(
 	router.LoadHTMLGlob("templates/*")
 	router.Static("/static", "./static")
 
-	// Protected routes
-	authorized := router.Group("/")
-	authorized.Use(server.authMiddleware())
-	{
-		authorized.GET("/projects", server.showProjects)
-		authorized.GET("/dashboard/:projectId", server.showProjectDashboard)
-		authorized.GET("/dashboard", server.showDashboard)
-		authorized.GET("/statistics", server.showStatistics)
-		authorized.GET("/projects/create", server.showCreateProjectForm)
-		authorized.POST("/projects", server.createProject)
-		registerTaskRoutes(server, authorized)
-		authorized.GET("/projects/:id/invite", server.showInviteMemberForm)
-		authorized.POST("/projects/:id/invite", server.inviteMember)
-		authorized.GET("/projects/join/:token", server.handleProjectInvitation)
-	}
-
 	// Auth routes
 	router.GET("/login", server.showLogin)
 	router.GET("/register", server.showRegister)
@@ -58,27 +44,77 @@ func NewServer(
 	router.POST("/register", server.handleRegister)
 	router.POST("/logout", server.handleLogout)
 
+	// Protected routes - требуется аутентификация
+	authorized := router.Group("/")
+	authorized.Use(server.authMiddleware())
+	{
+		// Общие маршруты для всех авторизованных
+		authorized.GET("/projects", server.showProjects)
+
+		// Перенаправление с /projects/:id на dashboard
+		authorized.GET("/projects/:id", func(ctx *gin.Context) {
+			id := ctx.Param("id")
+			ctx.Redirect(http.StatusFound, "/dashboard/"+id)
+		})
+
+		// Dashboard проекта с учетом роли
+		authorized.GET("/dashboard/:projectId", server.projectRoleMiddleware(ProjectRoleMember, ProjectRoleManager, ProjectRoleOwner), server.showProjectDashboard)
+
+		// Маршруты только для менеджеров и владельцев (управление проектом)
+		projectManagerRoutes := authorized.Group("/")
+		projectManagerRoutes.Use(server.requireManagementRights())
+		{
+			// Создание проектов
+			projectManagerRoutes.GET("/projects/create", server.showCreateProjectForm)
+			projectManagerRoutes.POST("/projects", server.createProject)
+
+			// Статистика
+			projectManagerRoutes.GET("/statistics", server.showStatistics)
+		}
+
+		// Маршруты для задач (просмотр, обновление)
+		taskRoutes := authorized.Group("/tasks")
+		{
+			taskRoutes.GET("", server.listTasks)
+			taskRoutes.GET("/:id", server.getTask)
+			taskRoutes.GET("/:id/time", server.getTaskTime)
+			taskRoutes.GET("/:id/confirm", server.showTaskConfirm)
+			taskRoutes.GET("/:id/details", server.showTaskDetails)
+
+			// Обновление задач (любой участник может обновлять свои задачи)
+			taskRoutes.PATCH("/:id/time", server.updateTaskTimeSpent)
+			taskRoutes.PATCH("/:id/status", server.updateTaskStatus)
+		}
+
+		// Маршруты для операций с задачами, доступные только менеджерам/владельцам
+		managerTaskRoutes := authorized.Group("/tasks")
+		managerTaskRoutes.Use(server.requireManagementRights())
+		{
+			managerTaskRoutes.GET("/create", server.showCreateTaskForm)
+			managerTaskRoutes.POST("", server.createTask)
+
+			// Редактирование задач доступно только менеджерам
+			managerTaskRoutes.PATCH("/:id/title", server.updateTaskTitle)
+			managerTaskRoutes.PATCH("/:id/description", server.updateTaskDescription)
+			managerTaskRoutes.PATCH("/:id/deadline", server.updateTaskDeadline)
+			managerTaskRoutes.PATCH("/:id/priority", server.updateTaskPriority)
+		}
+
+		// Маршруты для управления проектом
+		projectManagementRoutes := authorized.Group("/projects/:id")
+		projectManagementRoutes.Use(server.projectRoleMiddleware(ProjectRoleManager, ProjectRoleOwner))
+		{
+			projectManagementRoutes.GET("/invite", server.showInviteMemberForm)
+			projectManagementRoutes.POST("/invite", server.inviteMember)
+		}
+
+		// Приглашения в проект и работа с сотрудниками
+		authorized.GET("/projects/join/:token", server.handleProjectInvitation)
+		authorized.GET("/employees/:id/tasks", server.listEmployeeTasks)
+	}
+
 	server.router = router
 	return server
-}
-
-func registerTaskRoutes(server *Server, router *gin.RouterGroup) {
-	router.GET("/tasks/:id", server.getTask)
-	router.GET("/tasks/:id/time", server.getTaskTime)
-	router.GET("/tasks", server.listTasks)
-	router.GET("/projects/:id/tasks", server.listProjectTasks)
-	router.GET("/employees/:id/tasks", server.listEmployeeTasks)
-	router.PATCH("/tasks/:id/title", server.updateTaskTitle)
-	router.PATCH("/tasks/:id/description", server.updateTaskDescription)
-	router.PATCH("/tasks/:id/deadline", server.updateTaskDeadline)
-	router.PATCH("/tasks/:id/time", server.updateTaskTimeSpent)
-	router.PATCH("/tasks/:id/status", server.updateTaskStatus)
-	router.PATCH("/tasks/:id/priority", server.updateTaskPriority)
-
-	router.GET("/tasks/:id/confirm", server.showTaskConfirm)
-	router.GET("/tasks/:id/details", server.showTaskDetails)
-	router.GET("/tasks/create", server.showCreateTaskForm)
-	router.POST("/tasks", server.createTask)
 }
 
 func (server *Server) Start(address string) error {

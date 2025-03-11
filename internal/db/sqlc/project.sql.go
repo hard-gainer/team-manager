@@ -110,6 +110,23 @@ func (q *Queries) GetProject(ctx context.Context, id int64) (Project, error) {
 	return i, err
 }
 
+const getProjectParticipantRole = `-- name: GetProjectParticipantRole :one
+SELECT role FROM project_participants
+WHERE project_id = $1 AND user_id = $2
+`
+
+type GetProjectParticipantRoleParams struct {
+	ProjectID int64 `json:"project_id"`
+	UserID    int64 `json:"user_id"`
+}
+
+func (q *Queries) GetProjectParticipantRole(ctx context.Context, arg GetProjectParticipantRoleParams) (string, error) {
+	row := q.db.QueryRow(ctx, getProjectParticipantRole, arg.ProjectID, arg.UserID)
+	var role string
+	err := row.Scan(&role)
+	return role, err
+}
+
 const getProjectStats = `-- name: GetProjectStats :one
 SELECT 
     COUNT(DISTINCT t.id) as task_count,

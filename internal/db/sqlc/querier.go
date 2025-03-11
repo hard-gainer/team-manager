@@ -24,6 +24,7 @@ type Querier interface {
 	GetEmployee(ctx context.Context, id int32) (Employee, error)
 	GetProject(ctx context.Context, id int64) (Project, error)
 	GetProjectInvitation(ctx context.Context, token string) (ProjectInvitation, error)
+	GetProjectParticipantRole(ctx context.Context, arg GetProjectParticipantRoleParams) (string, error)
 	GetProjectStats(ctx context.Context, projectID pgtype.Int4) (GetProjectStatsRow, error)
 	GetProjectWithStats(ctx context.Context) ([]GetProjectWithStatsRow, error)
 	GetTask(ctx context.Context, id int64) (Task, error)

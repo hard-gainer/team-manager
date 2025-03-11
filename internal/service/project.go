@@ -75,22 +75,58 @@ func (server *Server) showProjects(ctx *gin.Context) {
 }
 
 func (server *Server) showProjectDashboard(ctx *gin.Context) {
-	projectID, err := strconv.ParseInt(ctx.Param("projectId"), 10, 32)
+	userID := getUserIDFromToken(ctx)
+	projectID, err := strconv.ParseInt(ctx.Param("projectId"), 10, 64)
 	if err != nil {
 		ctx.Redirect(http.StatusSeeOther, "/projects")
 		return
 	}
 
-	tasks, err := server.store.ListProjectTasks(ctx, util.ToNullInt4(int32(projectID)))
+	// Получаем данные проекта
+	project, err := server.store.GetProject(ctx, projectID)
 	if err != nil {
 		ctx.Redirect(http.StatusSeeOther, "/projects")
 		return
 	}
 
+	// Получаем роль пользователя
+	role, err := server.getUserRoleInProject(ctx, userID, projectID)
+	if err != nil {
+		ctx.Redirect(http.StatusSeeOther, "/projects")
+		return
+	}
+
+	// Получаем все задачи проекта
+	allTasks, err := server.store.ListProjectTasks(ctx, util.ToNullInt4(int32(projectID)))
+	if err != nil {
+		ctx.Redirect(http.StatusSeeOther, "/projects")
+		return
+	}
+
+	var tasks []db.Task
+
+	// Фильтруем задачи в зависимости от роли
+	if role == ProjectRoleManager || role == ProjectRoleOwner {
+		// Менеджеры и владельцы видят все задачи проекта
+		tasks = allTasks
+	} else {
+		// Обычные участники (member) видят только свои задачи
+		for _, task := range allTasks {
+			if task.AssignedTo.Int32 == userID {
+				tasks = append(tasks, task)
+			}
+		}
+	}
+
+	// Отображаем интерфейс
 	ctx.HTML(http.StatusOK, "dashboard.html", gin.H{
+		"project":   project,
 		"tasks":     tasks,
-		"active":    "dashboard",
 		"projectID": projectID,
+		"userRole":  role,
+		"isManager": role == ProjectRoleManager || role == ProjectRoleOwner,
+		"isOwner":   role == ProjectRoleOwner,
+		"active":    "dashboard",
 	})
 }
 

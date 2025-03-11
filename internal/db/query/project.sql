@@ -69,3 +69,7 @@ SELECT
     COALESCE(SUM(t.time_spent), 0)::bigint as total_time_spent
 FROM tasks t
 WHERE t.project_id = $1;
+
+-- name: GetProjectParticipantRole :one
+SELECT role FROM project_participants
+WHERE project_id = $1 AND user_id = $2;

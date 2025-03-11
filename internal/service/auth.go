@@ -139,14 +139,32 @@ func (server *Server) handleLogout(ctx *gin.Context) {
 	ctx.Redirect(http.StatusSeeOther, "/login")
 }
 
+// getUserIDFromToken извлекает ID пользователя из контекста
 func getUserIDFromToken(ctx *gin.Context) int32 {
 	userID, exists := ctx.Get("user_id")
 	if !exists {
 		return 0
 	}
+	return userID.(int32)
+}
 
-	if id, ok := userID.(int32); ok {
-		return id
+// getUserRole получает роль пользователя в проекте
+func (server *Server) getUserRoleInProject(ctx *gin.Context, userID int32, projectID int64) (string, error) {
+	// Проверка, является ли пользователь создателем проекта
+	project, err := server.store.GetProject(ctx, projectID)
+	if err == nil && project.CreatedBy.Int32 == userID {
+		return ProjectRoleOwner, nil
 	}
-	return 0
+
+	// Используем SQL-запрос для получения роли
+	role, err := server.store.GetProjectParticipantRole(ctx, db.GetProjectParticipantRoleParams{
+		ProjectID: projectID,
+		UserID:    int64(userID),
+	})
+
+	if err != nil {
+		return "", fmt.Errorf("user not found in project: %w", err)
+	}
+
+	return role, nil
 }
