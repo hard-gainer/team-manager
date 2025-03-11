@@ -32,6 +32,9 @@
     <div class="mr-16 p-8">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-3xl font-bold text-gray-800">My Projects</h1>
+            
+            <!-- Показываем кнопку только для менеджеров и администраторов -->
+            {{ if .isManager }}
             <button 
                 class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2"
                 hx-get="/projects/create"
@@ -42,6 +45,7 @@
                 </svg>
                 <span>New Project</span>
             </button>
+            {{ end }}
         </div>
 
         <!-- Projects Grid -->

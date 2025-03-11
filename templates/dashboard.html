@@ -50,7 +50,7 @@
     <!-- Main Content -->
     <div class="mr-16 p-8">
         <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">Task Dashboard</h1>
+            <h1 class="text-3xl font-bold text-gray-800">Task Dashboard: {{ .project.Title }}</h1>
             <div class="flex items-center">
                 <!-- Кнопка New Task видна только для Manager и Owner -->
                 {{ if .isManager }}

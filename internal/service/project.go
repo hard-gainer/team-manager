@@ -16,6 +16,19 @@ import (
 func (server *Server) showProjects(ctx *gin.Context) {
 	userID := getUserIDFromToken(ctx)
 
+	// Получаем информацию о пользователе
+	employee, err := server.store.GetEmployee(ctx, userID)
+	if err != nil {
+		log.Printf("Error loading employee: %v", err)
+		ctx.HTML(http.StatusInternalServerError, "error.html", gin.H{
+			"error": "Failed to load user data",
+		})
+		return
+	}
+
+	// Проверяем, является ли пользователь менеджером или админом (может создавать проекты)
+	isManager := employee.Role == "admin" || employee.Role == "manager"
+
 	projectsWithStats, err := server.store.GetProjectWithStats(ctx)
 	if err != nil {
 		log.Printf("Error loading projects: %v", err)
@@ -48,11 +61,13 @@ func (server *Server) showProjects(ctx *gin.Context) {
 			TotalTimeSpent: util.ToNullInt8(stats.TotalTimeSpent),
 		}
 
-		// if p.CreatedBy.Int32 == userID {
-		// 	userProjects = append(userProjects, projectWithStats)
-		// 	continue
-		// }
+		// Проверяем, является ли пользователь создателем проекта
+		if p.CreatedBy.Int32 == userID {
+			userProjects = append(userProjects, projectWithStats)
+			continue
+		}
 
+		// Проверяем участие пользователя в проекте
 		participants, err := server.store.ListProjectParticipants(ctx, p.ID)
 		if err != nil {
 			continue
@@ -69,8 +84,9 @@ func (server *Server) showProjects(ctx *gin.Context) {
 	log.Printf("Found %d projects for user %d", len(userProjects), userID)
 
 	ctx.HTML(http.StatusOK, "projects.html", gin.H{
-		"projects": userProjects,
-		"active":   "projects",
+		"projects":  userProjects,
+		"isManager": isManager, // Добавляем флаг для скрытия/показа кнопки создания проекта
+		"active":    "projects",
 	})
 }
 
@@ -96,6 +112,10 @@ func (server *Server) showProjectDashboard(ctx *gin.Context) {
 		return
 	}
 
+	// Определяем флаги прав доступа
+	isManager := role == ProjectRoleManager || role == ProjectRoleOwner
+	isOwner := role == ProjectRoleOwner
+
 	// Получаем все задачи проекта
 	allTasks, err := server.store.ListProjectTasks(ctx, util.ToNullInt4(int32(projectID)))
 	if err != nil {
@@ -106,7 +126,7 @@ func (server *Server) showProjectDashboard(ctx *gin.Context) {
 	var tasks []db.Task
 
 	// Фильтруем задачи в зависимости от роли
-	if role == ProjectRoleManager || role == ProjectRoleOwner {
+	if isManager {
 		// Менеджеры и владельцы видят все задачи проекта
 		tasks = allTasks
 	} else {
@@ -118,75 +138,16 @@ func (server *Server) showProjectDashboard(ctx *gin.Context) {
 		}
 	}
 
-	// Отображаем интерфейс
+	// Отображаем интерфейс с явно указанными флагами прав доступа
 	ctx.HTML(http.StatusOK, "dashboard.html", gin.H{
 		"project":   project,
 		"tasks":     tasks,
 		"projectID": projectID,
 		"userRole":  role,
-		"isManager": role == ProjectRoleManager || role == ProjectRoleOwner,
-		"isOwner":   role == ProjectRoleOwner,
+		"isManager": isManager, // Явно передаем для управления отображением кнопок
+		"isOwner":   isOwner,   // Явно передаем для дополнительных функций владельца
 		"active":    "dashboard",
 	})
-}
-
-func (server *Server) addProjectParticipant(ctx *gin.Context) {
-	projectID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID"})
-		return
-	}
-
-	var req struct {
-		UserID int64  `json:"user_id" binding:"required"`
-		Role   string `json:"role" binding:"required"`
-	}
-
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	arg := db.AddProjectParticipantParams{
-		ProjectID: projectID,
-		UserID:    req.UserID,
-		Role:      req.Role,
-	}
-
-	participant, err := server.store.AddProjectParticipant(ctx, arg)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, participant)
-}
-
-func (server *Server) removeProjectParticipant(ctx *gin.Context) {
-	projectID, err := strconv.ParseInt(ctx.Param("id"), 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid project ID"})
-		return
-	}
-
-	userID, err := strconv.ParseInt(ctx.Param("userId"), 10, 64)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-		return
-	}
-
-	arg := db.RemoveProjectParticipantParams{
-		ProjectID: projectID,
-		UserID:    userID,
-	}
-
-	err = server.store.RemoveProjectParticipant(ctx, arg)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.Status(http.StatusNoContent)
 }
 
 func (server *Server) showCreateProjectForm(ctx *gin.Context) {
