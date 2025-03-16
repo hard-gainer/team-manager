@@ -48,31 +48,25 @@ func NewServer(
 	authorized := router.Group("/")
 	authorized.Use(server.authMiddleware())
 	{
-		// Общие маршруты для всех авторизованных
 		authorized.GET("/projects", server.showProjects)
-
-		// Перенаправление с /projects/:id на dashboard
 		authorized.GET("/projects/:id", func(ctx *gin.Context) {
 			id := ctx.Param("id")
 			ctx.Redirect(http.StatusFound, "/dashboard/"+id)
 		})
 
-		// Dashboard проекта с учетом роли
 		authorized.GET("/dashboard/:projectId", server.projectRoleMiddleware(ProjectRoleMember, ProjectRoleManager, ProjectRoleOwner), server.showProjectDashboard)
 
-		// Маршруты только для менеджеров и владельцев (управление проектом)
-		projectManagerRoutes := authorized.Group("/")
-		projectManagerRoutes.Use(server.requireManagementRights())
+		// project routes, permission: admin, manager
+		appManagerRoutes := authorized.Group("/")
+		appManagerRoutes.Use(server.appRoleMiddleware(AppRoleAdmin, AppRoleManager))
 		{
-			// Создание проектов
-			projectManagerRoutes.GET("/projects/create", server.showCreateProjectForm)
-			projectManagerRoutes.POST("/projects", server.createProject)
+			appManagerRoutes.GET("projects/create", server.showCreateProjectForm)
+			appManagerRoutes.POST("projects", server.createProject)
 
-			// Статистика
-			projectManagerRoutes.GET("/statistics", server.showStatistics)
+			appManagerRoutes.GET("statistics", server.showStatistics)
 		}
 
-		// Маршруты для задач (просмотр, обновление)
+		// tasks routs, permission: all
 		taskRoutes := authorized.Group("/tasks")
 		{
 			taskRoutes.GET("", server.listTasks)
@@ -81,34 +75,26 @@ func NewServer(
 			taskRoutes.GET("/:id/confirm", server.showTaskConfirm)
 			taskRoutes.GET("/:id/details", server.showTaskDetails)
 
-			// Обновление задач (любой участник может обновлять свои задачи)
 			taskRoutes.PATCH("/:id/time", server.updateTaskTimeSpent)
 			taskRoutes.PATCH("/:id/status", server.updateTaskStatus)
 		}
 
-		// Маршруты для операций с задачами, доступные только менеджерам/владельцам
-		managerTaskRoutes := authorized.Group("/tasks")
-		managerTaskRoutes.Use(server.requireManagementRights())
+		// tasks routs, permission: owner, manager
+		managerTaskRoutes := authorized.Group("")
+		managerTaskRoutes.Use(server.projectRoleMiddleware(ProjectRoleOwner, ProjectRoleManager))
 		{
-			managerTaskRoutes.GET("/create", server.showCreateTaskForm)
-			managerTaskRoutes.POST("", server.createTask)
+			managerTaskRoutes.GET("/tasks/create", server.showCreateTaskForm)
+			managerTaskRoutes.POST("/tasks", server.createTask)
 
-			// Редактирование задач доступно только менеджерам
-			managerTaskRoutes.PATCH("/:id/title", server.updateTaskTitle)
-			managerTaskRoutes.PATCH("/:id/description", server.updateTaskDescription)
-			managerTaskRoutes.PATCH("/:id/deadline", server.updateTaskDeadline)
-			managerTaskRoutes.PATCH("/:id/priority", server.updateTaskPriority)
+			managerTaskRoutes.PATCH("/tasks/:id/title", server.updateTaskTitle)
+			managerTaskRoutes.PATCH("/tasks/:id/description", server.updateTaskDescription)
+			managerTaskRoutes.PATCH("/tasks/:id/deadline", server.updateTaskDeadline)
+			managerTaskRoutes.PATCH("/tasks/:id/priority", server.updateTaskPriority)
+
+			managerTaskRoutes.GET("/projects/:id/invite", server.showInviteMemberForm)
+			managerTaskRoutes.POST("/projects/:id/invite", server.inviteMember)
 		}
 
-		// Маршруты для управления проектом
-		projectManagementRoutes := authorized.Group("/projects/:id")
-		projectManagementRoutes.Use(server.projectRoleMiddleware(ProjectRoleManager, ProjectRoleOwner))
-		{
-			projectManagementRoutes.GET("/invite", server.showInviteMemberForm)
-			projectManagementRoutes.POST("/invite", server.inviteMember)
-		}
-
-		// Приглашения в проект и работа с сотрудниками
 		authorized.GET("/projects/join/:token", server.handleProjectInvitation)
 		authorized.GET("/employees/:id/tasks", server.listEmployeeTasks)
 	}

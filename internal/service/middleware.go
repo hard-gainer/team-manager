@@ -47,9 +47,16 @@ func (server *Server) projectRoleMiddleware(requiredRoles ...string) gin.Handler
 	return func(ctx *gin.Context) {
 		userID := getUserIDFromToken(ctx)
 
+		employee, err := server.store.GetEmployee(ctx, userID)
+		if err != nil {
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid or missing employee ID",
+			})
+			return
+		}
+
 		// Получаем ID проекта из параметров URL
 		var projectID int64
-		var err error
 
 		// Пробуем получить из :id
 		if idParam := ctx.Param("id"); idParam != "" {
@@ -73,7 +80,7 @@ func (server *Server) projectRoleMiddleware(requiredRoles ...string) gin.Handler
 		}
 
 		// Получаем роль пользователя в проекте
-		role, err := server.getUserRoleInProject(ctx, userID, projectID)
+		projectRole, err := server.getUserRoleInProject(ctx, userID, projectID)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
 				"error": "You don't have access to this project",
@@ -85,7 +92,7 @@ func (server *Server) projectRoleMiddleware(requiredRoles ...string) gin.Handler
 		if len(requiredRoles) > 0 {
 			hasRequiredRole := false
 			for _, requiredRole := range requiredRoles {
-				if role == requiredRole {
+				if projectRole == requiredRole {
 					hasRequiredRole = true
 					break
 				}
@@ -99,14 +106,52 @@ func (server *Server) projectRoleMiddleware(requiredRoles ...string) gin.Handler
 			}
 		}
 
-		// Сохраняем роль в контексте для использования в обработчиках
-		ctx.Set("project_role", role)
+		ctx.Set("app_role", employee.Role)
+		ctx.Set("project_role", projectRole)
 		ctx.Next()
 	}
 }
 
-// requireRoleMiddleware проверяет роль для операций, не привязанных к проекту
-func (server *Server) requireManagementRights() gin.HandlerFunc {
+func checkProjectRole(ctx *gin.Context, roles ...string) bool {
+	// Получаем роль пользователя из контекста
+	roleValue, exists := ctx.Get("project_role")
+	if !exists {
+		log.Printf("Project role not found in context")
+		return false
+	}
+
+	// Преобразуем в строку и проверяем
+	role, ok := roleValue.(string)
+	if !ok {
+		log.Printf("Project role is not a string: %T", roleValue)
+		return false
+	}
+
+	// Проверяем, соответствует ли роль одной из требуемых
+	for _, r := range roles {
+		if role == r {
+			return true
+		}
+	}
+
+	log.Printf("User has role '%s', but required one of: %v", role, roles)
+	return false
+}
+
+func (server *Server) requireProjectRole(roles ...string) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		if !checkProjectRole(ctx, roles...) {
+			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"error": "Insufficient permissions for this action",
+			})
+			return
+		}
+		ctx.Next()
+	}
+}
+
+// appRoleMiddleware проверяет глобальную роль пользователя в приложении
+func (server *Server) appRoleMiddleware(requiredRoles ...string) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		userID := getUserIDFromToken(ctx)
 
@@ -114,20 +159,91 @@ func (server *Server) requireManagementRights() gin.HandlerFunc {
 		employee, err := server.store.GetEmployee(ctx, userID)
 		if err != nil {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to get user information",
+				"error": "Failed to load user data",
 			})
 			return
 		}
 
-		// Проверяем, имеет ли пользователь права manager или admin
-		if employee.Role != "admin" && employee.Role != "manager" {
-			ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-				"error": "You don't have permission to perform this action",
-			})
-			ctx.Abort()
-			return
+		// Получаем глобальную роль пользователя в системе
+		appRole := employee.Role
+		log.Printf("User %d has app role: %s", userID, appRole)
+
+		// Проверяем, соответствует ли роль требуемым
+		if len(requiredRoles) > 0 {
+			hasRequiredRole := false
+			for _, requiredRole := range requiredRoles {
+				if appRole == requiredRole {
+					hasRequiredRole = true
+					break
+				}
+			}
+
+			if !hasRequiredRole {
+				log.Printf("User %d with role %s doesn't have required role (one of %v)",
+					userID, appRole, requiredRoles)
+				ctx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+					"error": "Insufficient permissions for this action",
+				})
+				return
+			}
 		}
 
+		// Сохраняем роль в контексте для использования в обработчиках
+		ctx.Set("app_role", appRole)
 		ctx.Next()
 	}
+}
+
+// isAppAdmin проверяет, имеет ли пользователь глобальную роль Admin
+func isAppAdmin(ctx *gin.Context) bool {
+	roleValue, exists := ctx.Get("app_role")
+	if !exists {
+		return false
+	}
+
+	role, ok := roleValue.(string)
+	if !ok {
+		return false
+	}
+
+	return role == AppRoleAdmin
+}
+
+// isAppManager проверяет, имеет ли пользователь глобальную роль Admin или Manager
+func isAppManager(ctx *gin.Context) bool {
+	roleValue, exists := ctx.Get("app_role")
+	if !exists {
+		return false
+	}
+
+	role, ok := roleValue.(string)
+	if !ok {
+		return false
+	}
+
+	return role == AppRoleAdmin || role == AppRoleManager
+}
+
+// checkAppRole проверяет, имеет ли пользователь одну из указанных глобальных ролей
+func checkAppRole(ctx *gin.Context, roles ...string) bool {
+	roleValue, exists := ctx.Get("app_role")
+	if !exists {
+		log.Printf("App role not found in context")
+		return false
+	}
+
+	role, ok := roleValue.(string)
+	if !ok {
+		log.Printf("App role is not a string: %T", roleValue)
+		return false
+	}
+
+	for _, r := range roles {
+		if role == r {
+			return true
+		}
+	}
+
+	log.Printf("User has app role '%s', but required one of: %v", role, roles)
+	return false
 }

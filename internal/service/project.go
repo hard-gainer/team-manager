@@ -180,7 +180,7 @@ func (server *Server) createProject(ctx *gin.Context) {
 	arg1 := db.AddProjectParticipantParams{
 		ProjectID: project.ID,
 		UserID:    int64(user.ID),
-		Role:      user.Role,
+		Role:      ProjectRoleOwner,
 	}
 
 	_, err = server.store.AddProjectParticipant(ctx, arg1)
@@ -249,8 +249,6 @@ func (server *Server) inviteMember(ctx *gin.Context) {
 		})
 		return
 	}
-
-	log.Println("Success!!!")
 
 	ctx.HTML(http.StatusOK, "invite_result.html", gin.H{
 		"success": "Invitation sent successfully",

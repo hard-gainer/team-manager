@@ -150,12 +150,6 @@ func getUserIDFromToken(ctx *gin.Context) int32 {
 
 // getUserRole получает роль пользователя в проекте
 func (server *Server) getUserRoleInProject(ctx *gin.Context, userID int32, projectID int64) (string, error) {
-	// Проверка, является ли пользователь создателем проекта
-	project, err := server.store.GetProject(ctx, projectID)
-	if err == nil && project.CreatedBy.Int32 == userID {
-		return ProjectRoleOwner, nil
-	}
-
 	// Используем SQL-запрос для получения роли
 	role, err := server.store.GetProjectParticipantRole(ctx, db.GetProjectParticipantRoleParams{
 		ProjectID: projectID,
